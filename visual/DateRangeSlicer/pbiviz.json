@@ -1,0 +1,23 @@
+{
+  "visual": {
+    "name": "dateRangeSlicer",
+    "displayName": "日期区间切片器",
+    "guid": "DateRangeSlicer20260822001",
+    "visualClassName": "DateRangeSlicer",
+    "version": "1.0.0.0",
+    "description": "左侧标签 + 两个深色圆角日期输入框 + 中间箭头，基于区间筛选的自定义切片器",
+    "supportUrl": "https://community.powerbi.com",
+    "gitHubUrl": "https://github.com/"
+  },
+  "apiVersion": "5.4.0",
+  "author": {
+    "name": "BI Delivery",
+    "email": "bi@example.com"
+  },
+  "assets": {
+    "icon": "assets/icon.png"
+  },
+  "externalJS": [],
+  "style": "style/dateRangeSlicer.less",
+  "capabilities": "capabilities.json"
+}

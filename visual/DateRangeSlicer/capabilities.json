@@ -1,0 +1,202 @@
+{
+    "privileges": [],
+    "dataRoles": [
+        {
+            "displayName": "日期字段",
+            "name": "Date",
+            "kind": "Grouping"
+        }
+    ],
+    "dataViewMappings": [
+        {
+            "conditions": [
+                {
+                    "Date": {
+                        "max": 1,
+                        "min": 1
+                    }
+                }
+            ],
+            "categorical": {
+                "categories": {
+                    "select": [
+                        {
+                            "bind": {
+                                "to": "Date"
+                            }
+                        }
+                    ],
+                    "dataReductionAlgorithm": {
+                        "top": {
+                            "count": 30000
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "objects": {
+        "general": {
+            "displayName": "常规",
+            "properties": {
+                "filter": {
+                    "type": {
+                        "filter": true
+                    }
+                }
+            }
+        },
+        "header": {
+            "displayName": "切片器标头",
+            "properties": {
+            "show": {
+                "displayName": "标头",
+                "type": {
+                    "bool": true
+                }
+            },
+            "title": {
+                "displayName": "标题文字",
+                "type": {
+                    "text": true
+                }
+            },
+            "position": {
+                "displayName": "文本位置",
+                "type": {
+                    "enumeration": [
+                        {
+                            "value": "top",
+                            "displayName": "上方"
+                        },
+                        {
+                            "value": "left",
+                            "displayName": "左侧"
+                        }
+                    ]
+                }
+            },
+                "fontColor": {
+                    "displayName": "字体颜色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "background": {
+                    "displayName": "背景色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "fontSize": {
+                    "displayName": "字体大小",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "fontFamily": {
+                    "displayName": "字体",
+                    "type": {
+                        "formatting": {
+                            "fontFamily": true
+                        }
+                    }
+                },
+                "bold": {
+                    "displayName": "粗体",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "italic": {
+                    "displayName": "斜体",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "underline": {
+                    "displayName": "下划线",
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
+        },
+        "selection": {
+            "displayName": "切片器设置",
+            "properties": {
+                "backgroundColor": {
+                    "displayName": "背景色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "borderColor": {
+                    "displayName": "边框颜色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "borderWidth": {
+                    "displayName": "边框粗细",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "borderRadius": {
+                    "displayName": "圆角",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "accentColor": {
+                    "displayName": "强调色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "labels": {
+            "displayName": "值",
+            "properties": {
+                "fontColor": {
+                    "displayName": "字体颜色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "fontSize": {
+                    "displayName": "字体大小",
+                    "type": {
+                        "numeric": true
+                    }
+                }
+            }
+        }
+    }
+}

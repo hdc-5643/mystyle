@@ -1,0 +1,30 @@
+# ===== Dependencies (regenerable) =====
+node_modules/
+.venv/
+
+# ===== Build output =====
+dist/
+.tmp/
+.vscode/
+*.tmp_pbiviz.json
+
+# ===== Third-party / non-deliverable copies =====
+# 微软 ChicletSlicer 的拷贝（自带 .git 的嵌套仓库，非本项目交付物）
+PowerBI-visuals-ChicletSlicer/
+# 第三方编译产物（非本切片器交付物）
+visual/ChicletSlicer*.pbiviz
+
+# ===== Power BI report files (large binaries, excluded per user) =====
+*.pbix
+
+# ===== Leftover reference files (intended for deletion) =====
+s1.json
+s1b.json
+s2.json
+
+# ===== OS / misc =====
+Thumbs.db
+.DS_Store
+
+# ===== Custom visual package: keep the importable .pbiviz at repo root (deliverable, can be rolled back) =====
+# (no rule excludes *.pbiviz, so DateRangeSlicer*.pbiviz is tracked by default)

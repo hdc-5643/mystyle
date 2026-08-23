@@ -1,0 +1,154 @@
+.dateRangeSlicer {
+    --drs-bg: #0A1428;
+    --drs-fg: #FFFFFF;
+    --drs-border: #2C4A6B;
+    --drs-accent: #378ADD;
+    --drs-radius: 4px;
+    --drs-border-width: 1px;
+    --drs-label-size: 12px;
+    --drs-arrow-color: #888780;
+
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+    height: 100%;
+    padding: 2px;
+    box-sizing: border-box;
+    font-family: "Segoe UI", "Microsoft YaHei", -apple-system, sans-serif;
+    overflow: hidden;
+
+    &.drs-layout-left {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .drs-header {
+        display: flex;
+        align-items: center;
+        height: 30px;
+        flex: 0 0 auto;
+        padding: 0 6px;
+        border-radius: var(--drs-radius);
+        box-sizing: border-box;
+        justify-content: flex-start;
+    }
+
+    &.drs-layout-left .drs-header {
+        width: auto;
+    }
+
+    &.drs-layout-top .drs-header {
+        width: 100%;
+    }
+
+    .drs-label {
+        color: var(--drs-fg);
+        font-size: var(--drs-label-size);
+        line-height: 1;
+        white-space: nowrap;
+        user-select: none;
+    }
+
+    .drs-inputs {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        flex: 1 1 auto;
+        min-width: 0;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+    }
+
+    &.drs-layout-left .drs-inputs {
+        flex: 1 1 auto;
+    }
+
+    // 输入框包裹层：固定宽度，保证两个日期框等宽紧凑，贴近 HTML 顶栏横条比例
+    .drs-input-wrap {
+        position: relative;
+        flex: 0 0 auto;
+        width: 92px;
+    }
+
+    // 叠加显示文本：始终显示（已选日期或数据边界），覆盖浏览器原生的 yyyy/mm/日 格式提示
+    .drs-value {
+        position: absolute;
+        left: 0;
+        right: 0;
+        width: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--drs-fg);
+        font-size: var(--drs-label-size);
+        line-height: 1;
+        text-align: center;
+        pointer-events: none;
+        user-select: none;
+        z-index: 1;
+        white-space: nowrap;
+    }
+
+    // 原生日期文字始终透明，由叠加层 .drs-value 作为唯一可见文本
+    .drs-input::-webkit-datetime-edit,
+    .drs-input::-webkit-datetime-edit-fields-wrapper {
+        color: transparent;
+    }
+
+    .drs-input {
+        position: relative;
+        background: var(--drs-bg);
+        color: var(--drs-fg);
+        border: var(--drs-border-width) solid var(--drs-border);
+        border-radius: var(--drs-radius);
+        padding: 6px 12px;
+        font-size: var(--drs-label-size);
+        line-height: 1.5;
+        height: auto;
+        outline: none;
+        width: 92px;
+        flex: 0 0 auto;
+        box-sizing: border-box;
+        cursor: pointer;
+
+        // 隐藏原生日历图标，但用透明热区覆盖整个输入框，
+        // 点击输入框任意位置都能弹出系统日期选择器
+        &::-webkit-calendar-picker-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+    }
+
+    .drs-input:hover {
+        border-color: var(--drs-accent);
+    }
+
+    .drs-input:focus {
+        border-color: var(--drs-accent);
+    }
+
+    .drs-arrow {
+        color: var(--drs-arrow-color);
+        font-size: 12px;
+        line-height: 1;
+        user-select: none;
+        flex: 0 0 auto;
+    }
+
+    .drs-label {
+        color: var(--drs-fg);
+        font-size: var(--drs-label-size);
+        line-height: 1;
+        white-space: nowrap;
+        user-select: none;
+        opacity: 0.7;
+    }
+}

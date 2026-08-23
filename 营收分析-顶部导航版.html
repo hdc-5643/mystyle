@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>营收分析 · 月度结算</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif;
+      background: #0A1428;
+      color: #FFFFFF;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 0;
+    }
+    .canvas {
+      width: 1280px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ============ 顶部导航栏 ============ */
+    .topbar {
+      background: #0F1B30;
+      border-bottom: 1px solid #1E3A5F;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar-row1 {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      border-bottom: 0.5px solid #1E3A5F;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-logo {
+      width: 38px; height: 38px;
+      background: #1A2D44;
+      border: 1px solid #378ADD;
+      border-left: 3px solid #7F77DD;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 14px; color: #378ADD;
+    }
+    .brand-main { font-size: 15px; font-weight: 500; }
+    .brand-sub { font-size: 10px; color: #888780; letter-spacing: 0.8px; margin-top: 2px; }
+    .date-filter { display: flex; align-items: center; gap: 8px; }
+    .date-label { font-size: 11px; color: #B4B2A9; }
+    .date-input {
+      background: #0A1428; border: 1px solid #2C4A6B;
+      padding: 6px 12px; border-radius: 4px;
+      font-size: 11px; color: #FFFFFF;
+    }
+    .date-arrow { color: #888780; font-size: 12px; }
+
+    .topbar-row2 {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 24px;
+    }
+    .page-nav { display: flex; gap: 4px; }
+    .page-nav-item {
+      padding: 7px 16px; font-size: 12px; color: #B4B2A9;
+      border-radius: 6px; border: 1px solid transparent;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .page-nav-item:hover { color: #FFFFFF; background: #142436; }
+    .page-nav-item.active {
+      background: #1A2D44; color: #FFFFFF; font-weight: 500;
+      border-color: #378ADD;
+      border-left: 3px solid #7F77DD; padding-left: 13px;
+    }
+    .bookmark-nav { display: flex; gap: 6px; }
+    .bookmark-item {
+      padding: 5px 12px; font-size: 11px; color: #B4B2A9;
+      background: #0A1428; border: 1px solid #2C4A6B;
+      border-radius: 12px; cursor: pointer;
+    }
+    .bookmark-item:hover { color: #FFFFFF; border-color: #378ADD; }
+    .bookmark-item.active {
+      background: #7F77DD; color: #FFFFFF; font-weight: 500; border-color: #7F77DD;
+    }
+
+    /* ============ 主内容 ============ */
+    .main { padding: 16px 24px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+
+    .section-title {
+      font-size: 16px; font-weight: 500; margin-bottom: 2px;
+    }
+    .section-sub { font-size: 11px; color: #888780; }
+
+    /* KPI */
+    .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .kpi-card {
+      background: #142436; border: 1px solid #2C4A6B;
+      border-radius: 8px; padding: 16px 18px; position: relative;
+    }
+    .kpi-label { font-size: 11px; color: #B4B2A9; }
+    .kpi-value { font-size: 22px; font-weight: 500; margin-top: 8px; }
+    .kpi-trend { font-size: 10px; margin-top: 6px; }
+    .trend-up { color: #5DCAA5; }
+    .trend-down { color: #F0997B; }
+    .kpi-card.featured { background: #1A2D44; border: 1px solid #378ADD; }
+    .kpi-card.featured::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+      background: #7F77DD; border-radius: 8px 0 0 8px;
+    }
+    .kpi-card.featured .kpi-value { color: #378ADD; }
+
+    /* 图表卡 */
+    .chart-card {
+      background: #142436; border: 1px solid #2C4A6B;
+      border-radius: 8px; padding: 16px;
+    }
+    .chart-title {
+      font-size: 13px; font-weight: 500; margin-bottom: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .chart-legend { display: flex; gap: 12px; font-size: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 4px; }
+    .legend-color { width: 14px; height: 2px; border-radius: 1px; }
+
+    .chart-row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+
+    /* TOP10 */
+    .top10-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex: 1; }
+    .top10-card {
+      background: #142436; border: 1px solid #2C4A6B;
+      border-radius: 8px; padding: 14px;
+      display: flex; flex-direction: column;
+    }
+    .top10-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+    .top10-legend { display: flex; gap: 8px; font-size: 10px; margin-bottom: 10px; }
+    .top10-list { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .top10-item { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+    .top10-name {
+      color: #B4B2A9; width: 70px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .top10-bar-bg {
+      flex: 1; background: #0A1428; height: 8px;
+      border-radius: 2px; overflow: hidden;
+    }
+    .top10-bar { height: 100%; border-radius: 2px; }
+    .top10-value {
+      color: #FFFFFF; font-weight: 500;
+      width: 50px; text-align: right;
+    }
+    .top10-item.highlight .top10-name { color: #FFFFFF; font-weight: 500; }
+    .top10-item.highlight .top10-value { color: #7F77DD; }
+    .top10-item.highlight .top10-bar { background: #7F77DD; }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+
+    <!-- 顶部导航栏 -->
+    <div class="topbar">
+      <!-- 第一层：品牌 + 日期筛选 -->
+      <div class="topbar-row1">
+        <div class="brand">
+          <div class="brand-logo">RA</div>
+          <div>
+            <div class="brand-main">营收分析</div>
+            <div class="brand-sub">REVENUE ANALYTICS</div>
+          </div>
+        </div>
+        <div class="date-filter">
+          <span class="date-label">结算日期</span>
+          <span class="date-input">2026/3/1</span>
+          <span class="date-arrow">→</span>
+          <span class="date-input">2026/3/31</span>
+        </div>
+      </div>
+
+      <!-- 第二层：页面导航器 + 书签导航器 -->
+      <div class="topbar-row2">
+        <div class="page-nav">
+          <div class="page-nav-item active">结算收入</div>
+          <div class="page-nav-item">支付收入</div>
+          <div class="page-nav-item">渠道分析</div>
+          <div class="page-nav-item">客户洞察</div>
+          <div class="page-nav-item">月度对比</div>
+        </div>
+        <div class="bookmark-nav">
+          <div class="bookmark-item active">全部渠道</div>
+          <div class="bookmark-item">仅直播</div>
+          <div class="bookmark-item">非直播</div>
+          <div class="bookmark-item">仅 MCN</div>
+          <div class="bookmark-item">星图</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主内容 -->
+    <div class="main">
+
+      <!-- 页面标题 -->
+      <div>
+        <div class="section-title">营收概况 · 结算收入</div>
+        <div class="section-sub">月度结算收入与渠道分布分析 · Page 1</div>
+      </div>
+
+      <!-- KPI 行 -->
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">智趣-服务费</div>
+          <div class="kpi-value">80,144</div>
+          <div class="kpi-trend trend-up">↑ 8.2% vs 上期</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">猪推库-服务费</div>
+          <div class="kpi-value">93,969</div>
+          <div class="kpi-trend trend-up">↑ 12.5% vs 上期</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">MCN-结算佣金</div>
+          <div class="kpi-value">204,916</div>
+          <div class="kpi-trend trend-up">↑ 15.7% vs 上期</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">星图激活金额</div>
+          <div class="kpi-value">692,500</div>
+          <div class="kpi-trend trend-down">↓ 3.1% vs 上期</div>
+        </div>
+        <div class="kpi-card featured">
+          <div class="kpi-label">总营收</div>
+          <div class="kpi-value">1,071,529</div>
+          <div class="kpi-trend trend-up">↑ 11.3% vs 上期</div>
+        </div>
+      </div>
+
+      <!-- 主图区：趋势图 + 环形图 -->
+      <div class="chart-row">
+        <div class="chart-card">
+          <div class="chart-title">
+            <span>收入趋势</span>
+            <div class="chart-legend">
+              <div class="legend-item"><span class="legend-color" style="background: #378ADD;"></span><span style="color: #B4B2A9;">总营收</span></div>
+              <div class="legend-item"><span class="legend-color" style="background: #7F77DD;"></span><span style="color: #B4B2A9;">MCN</span></div>
+              <div class="legend-item"><span class="legend-color" style="background: #AFA9EC;"></span><span style="color: #B4B2A9;">星图</span></div>
+              <div class="legend-item"><span class="legend-color" style="background: #5DCAA5;"></span><span style="color: #B4B2A9;">猪推库</span></div>
+              <div class="legend-item"><span class="legend-color" style="background: #888780;"></span><span style="color: #B4B2A9;">智趣直播</span></div>
+            </div>
+          </div>
+          <svg viewBox="0 0 540 170" style="width: 100%; height: 170px;">
+            <line x1="40" y1="20" x2="540" y2="20" stroke="#1E3A5F" stroke-width="0.5"/>
+            <line x1="40" y1="60" x2="540" y2="60" stroke="#1E3A5F" stroke-width="0.5"/>
+            <line x1="40" y1="100" x2="540" y2="100" stroke="#1E3A5F" stroke-width="0.5"/>
+            <line x1="40" y1="140" x2="540" y2="140" stroke="#1E3A5F" stroke-width="0.5"/>
+            <text x="36" y="24" text-anchor="end" font-size="9" fill="#5F5E5A">100K</text>
+            <text x="36" y="64" text-anchor="end" font-size="9" fill="#5F5E5A">50K</text>
+            <text x="36" y="144" text-anchor="end" font-size="9" fill="#5F5E5A">0</text>
+            <polyline points="50,130 80,82 110,68 140,98 170,116 200,52 230,75 260,108 290,124 320,134 350,88 380,110 410,128 440,140" stroke="#378ADD" stroke-width="2" fill="none"/>
+            <polyline points="50,138 80,132 110,135 140,128 170,120 200,112 230,118 260,124 290,128 320,132 350,128 380,132 410,135 440,140" stroke="#7F77DD" stroke-width="1.5" fill="none" opacity="0.85"/>
+            <polyline points="50,144 110,142 170,141 230,143 290,142 350,144 410,143 440,145" stroke="#AFA9EC" stroke-width="1" fill="none" opacity="0.7"/>
+            <polyline points="50,146 110,144 170,144 230,145 290,144 350,146 410,144 440,148" stroke="#5DCAA5" stroke-width="1" fill="none" opacity="0.6"/>
+            <polyline points="50,148 110,147 170,148 230,148 290,147 350,148 410,148 440,150" stroke="#888780" stroke-width="0.5" fill="none" opacity="0.5"/>
+            <circle cx="200" cy="52" r="3.5" fill="#378ADD"/>
+            <text x="206" y="47" font-size="10" font-weight="500" fill="#378ADD">65,775</text>
+            <circle cx="80" cy="82" r="3.5" fill="#378ADD"/>
+            <text x="86" y="77" font-size="10" font-weight="500" fill="#378ADD">121,239</text>
+            <circle cx="350" cy="88" r="3.5" fill="#378ADD"/>
+            <text x="356" y="83" font-size="10" font-weight="500" fill="#378ADD">27,104</text>
+            <text x="50" y="160" font-size="9" fill="#5F5E5A">3/1</text>
+            <text x="170" y="160" font-size="9" fill="#5F5E5A">3/8</text>
+            <text x="290" y="160" font-size="9" fill="#5F5E5A">3/15</text>
+            <text x="410" y="160" font-size="9" fill="#5F5E5A">3/22</text>
+            <text x="430" y="160" font-size="9" fill="#5F5E5A">3/29</text>
+          </svg>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">渠道占比</div>
+          <div style="display: flex; align-items: center; gap: 16px; margin-top: 8px;">
+            <svg viewBox="0 0 110 110" style="width: 110px; height: 110px; flex-shrink: 0;">
+              <circle cx="55" cy="55" r="34" fill="none" stroke="#1E3A5F" stroke-width="14"/>
+              <circle cx="55" cy="55" r="34" fill="none" stroke="#7F77DD" stroke-width="14" stroke-dasharray="137.9 213.6" transform="rotate(-90 55 55)"/>
+              <circle cx="55" cy="55" r="34" fill="none" stroke="#378ADD" stroke-width="14" stroke-dasharray="40.8 213.6" stroke-dashoffset="-137.9" transform="rotate(-90 55 55)"/>
+              <circle cx="55" cy="55" r="34" fill="none" stroke="#AFA9EC" stroke-width="14" stroke-dasharray="18.8 213.6" stroke-dashoffset="-178.7" transform="rotate(-90 55 55)"/>
+              <circle cx="55" cy="55" r="34" fill="none" stroke="#5DCAA5" stroke-width="14" stroke-dasharray="13 213.6" stroke-dashoffset="-197.5" transform="rotate(-90 55 55)"/>
+              <circle cx="55" cy="55" r="34" fill="none" stroke="#888780" stroke-width="14" stroke-dasharray="3 213.6" stroke-dashoffset="-210.5" transform="rotate(-90 55 55)"/>
+              <text x="55" y="52" text-anchor="middle" font-size="9" fill="#888780">总计</text>
+              <text x="55" y="65" text-anchor="middle" font-size="11" font-weight="500" fill="#FFFFFF">¥1.07M</text>
+            </svg>
+            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 10px; flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; background: #7F77DD; border-radius: 2px;"></span>
+                <span style="color: #B4B2A9; flex: 1;">星图</span>
+                <span style="color: #FFFFFF; font-weight: 500;">64.6%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; background: #378ADD; border-radius: 2px;"></span>
+                <span style="color: #B4B2A9; flex: 1;">MCN</span>
+                <span style="color: #FFFFFF; font-weight: 500;">19.1%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; background: #AFA9EC; border-radius: 2px;"></span>
+                <span style="color: #B4B2A9; flex: 1;">猪推库</span>
+                <span style="color: #FFFFFF; font-weight: 500;">8.8%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; background: #5DCAA5; border-radius: 2px;"></span>
+                <span style="color: #B4B2A9; flex: 1;">智趣非直播</span>
+                <span style="color: #FFFFFF; font-weight: 500;">6.1%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; background: #888780; border-radius: 2px;"></span>
+                <span style="color: #B4B2A9; flex: 1;">智趣直播</span>
+                <span style="color: #FFFFFF; font-weight: 500;">1.4%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOP10 区 -->
+      <div class="top10-row">
+
+        <div class="top10-card">
+          <div class="top10-title">智趣商品 TOP10</div>
+          <div class="top10-legend">
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; background: #378ADD; border-radius: 50%;"></span><span style="color: #B4B2A9;">非直播</span></span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; background: #7F77DD; border-radius: 50%;"></span><span style="color: #B4B2A9;">直播</span></span>
+          </div>
+          <div class="top10-list">
+            <div class="top10-item"><span class="top10-name">毕杜蕴酸奶</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 95%;"></div></div><span class="top10-value">21,274</span></div>
+            <div class="top10-item"><span class="top10-name">铂金萃4联</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 34%;"></div></div><span class="top10-value">7,571</span></div>
+            <div class="top10-item"><span class="top10-name">新蛮蛮糖糊</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #7F77DD; width: 27%;"></div></div><span class="top10-value">6,006</span></div>
+            <div class="top10-item"><span class="top10-name">丹麦萃取液</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 24%;"></div></div><span class="top10-value">5,386</span></div>
+            <div class="top10-item"><span class="top10-name">爱莱雅男士洗</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #7F77DD; width: 18%;"></div></div><span class="top10-value">4,018</span></div>
+            <div class="top10-item"><span class="top10-name">满露香氛衣物</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 17%;"></div></div><span class="top10-value">3,747</span></div>
+            <div class="top10-item"><span class="top10-name">马鞭鞘抹抹</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 11%;"></div></div><span class="top10-value">2,391</span></div>
+            <div class="top10-item"><span class="top10-name">akasugu 紧致</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 11%;"></div></div><span class="top10-value">2,390</span></div>
+            <div class="top10-item"><span class="top10-name">六必治咸虾护</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 10%;"></div></div><span class="top10-value">2,234</span></div>
+            <div class="top10-item"><span class="top10-name">依泉舒敏修护</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #7F77DD; width: 10%;"></div></div><span class="top10-value">2,133</span></div>
+          </div>
+        </div>
+
+        <div class="top10-card">
+          <div class="top10-title">猪推库商品 TOP10</div>
+          <div class="top10-legend"><span style="color: #B4B2A9; font-size: 10px;">按服务费收入排序</span></div>
+          <div class="top10-list">
+            <div class="top10-item"><span class="top10-name">八周热吻韩国</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 100%;"></div></div><span class="top10-value">7,730</span></div>
+            <div class="top10-item"><span class="top10-name">马来西亚进口</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 39%;"></div></div><span class="top10-value">2,995</span></div>
+            <div class="top10-item"><span class="top10-name">AHBIG 华致</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 31%;"></div></div><span class="top10-value">2,387</span></div>
+            <div class="top10-item"><span class="top10-name">淘宝全自动特</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 26%;"></div></div><span class="top10-value">2,018</span></div>
+            <div class="top10-item"><span class="top10-name">祛头事多日小</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 26%;"></div></div><span class="top10-value">1,988</span></div>
+            <div class="top10-item"><span class="top10-name">艾草生姜足贴</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 18%;"></div></div><span class="top10-value">1,363</span></div>
+            <div class="top10-item"><span class="top10-name">92部小哥小</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 15%;"></div></div><span class="top10-value">1,166</span></div>
+            <div class="top10-item"><span class="top10-name">淘淘之家立领</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 15%;"></div></div><span class="top10-value">1,142</span></div>
+            <div class="top10-item"><span class="top10-name">万能千灯 自</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 14%;"></div></div><span class="top10-value">1,112</span></div>
+            <div class="top10-item"><span class="top10-name">内廷上用 国立</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 13%;"></div></div><span class="top10-value">1,008</span></div>
+          </div>
+        </div>
+
+        <div class="top10-card">
+          <div class="top10-title">MCN 佣金 TOP10</div>
+          <div class="top10-legend"><span style="color: #B4B2A9; font-size: 10px;">达人结算佣金排序</span></div>
+          <div class="top10-list">
+            <div class="top10-item highlight"><span class="top10-name">达人康轩 欧</span><div class="top10-bar-bg"><div class="top10-bar" style="width: 100%;"></div></div><span class="top10-value">176,763</span></div>
+            <div class="top10-item"><span class="top10-name">爆麦嗯嗯</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #AFA9EC; width: 4%;"></div></div><span class="top10-value">6,735</span></div>
+            <div class="top10-item"><span class="top10-name">凡士林高升</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #AFA9EC; width: 4%;"></div></div><span class="top10-value">6,476</span></div>
+            <div class="top10-item"><span class="top10-name">新蛮蛮糖糊</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #AFA9EC; width: 3%;"></div></div><span class="top10-value">4,617</span></div>
+            <div class="top10-item"><span class="top10-name">新蛮蛮糖糊2</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #AFA9EC; width: 1%;"></div></div><span class="top10-value">1,733</span></div>
+            <div class="top10-item"><span class="top10-name">BIC摩名上新</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #AFA9EC; width: 1%;"></div></div><span class="top10-value">1,517</span></div>
+            <div class="top10-item"><span class="top10-name">瑞士b&x青年</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #AFA9EC; width: 1%;"></div></div><span class="top10-value">1,473</span></div>
+            <div class="top10-item"><span class="top10-name">新生儿头采棉</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #AFA9EC; width: 0.7%;"></div></div><span class="top10-value">1,295</span></div>
+            <div class="top10-item"><span class="top10-name">达人康轩 欧2</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #AFA9EC; width: 0.5%;"></div></div><span class="top10-value">831</span></div>
+            <div class="top10-item"><span class="top10-name">音乐不打烊</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #AFA9EC; width: 0.5%;"></div></div><span class="top10-value">795</span></div>
+          </div>
+        </div>
+
+        <div class="top10-card">
+          <div class="top10-title">星图激活金额 TOP10</div>
+          <div class="top10-legend"><span style="color: #B4B2A9; font-size: 10px;">按激活金额排序</span></div>
+          <div class="top10-list">
+            <div class="top10-item"><span class="top10-name">满露衣物滑润</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 100%;"></div></div><span class="top10-value">71,500</span></div>
+            <div class="top10-item"><span class="top10-name">凡士林素颜蜜</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 70%;"></div></div><span class="top10-value">50,000</span></div>
+            <div class="top10-item"><span class="top10-name">德尔奇春春</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 70%;"></div></div><span class="top10-value">50,000</span></div>
+            <div class="top10-item"><span class="top10-name">子初冻干粉</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 67%;"></div></div><span class="top10-value">48,000</span></div>
+            <div class="top10-item"><span class="top10-name">子初MENGMU</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 60%;"></div></div><span class="top10-value">42,900</span></div>
+            <div class="top10-item"><span class="top10-name">inne 魔立棒</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 57%;"></div></div><span class="top10-value">40,700</span></div>
+            <div class="top10-item"><span class="top10-name">子初洁面泡沫</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 55%;"></div></div><span class="top10-value">39,000</span></div>
+            <div class="top10-item"><span class="top10-name">老百姓香氛洗</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 47%;"></div></div><span class="top10-value">33,600</span></div>
+            <div class="top10-item"><span class="top10-name">得着针初蛤粉</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 44%;"></div></div><span class="top10-value">31,700</span></div>
+            <div class="top10-item"><span class="top10-name">YeeHoo 英氏</span><div class="top10-bar-bg"><div class="top10-bar" style="background: #378ADD; width: 42%;"></div></div><span class="top10-value">30,000</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</body>
+</html>
