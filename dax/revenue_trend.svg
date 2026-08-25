@@ -1,7 +1,0 @@
-<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Revenue trend">
-  <path d="M4 25H28" fill="none" stroke="#2A4663" stroke-width="1.5" stroke-linecap="round"/>
-  <path d="M4 21L10 17L15 19L21 11L28 6V25H4Z" fill="#378ADD" fill-opacity="0.14"/>
-  <path d="M4 21L10 17L15 19L21 11L28 6" fill="none" stroke="#8CBDF2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="28" cy="6" r="2.2" fill="#FFFFFF"/>
-  <circle cx="28" cy="6" r="1" fill="#378ADD"/>
-</svg>

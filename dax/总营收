@@ -1,6 +1,6 @@
-总营收_趋势图标 =
-VAR total = [总营收]
-VAR totalFmt = FORMAT(total, "#,0")
+MCNHTML = 
+VAR total = [MCN-结算机构佣金]
+VAR totalFmt = "¥" & FORMAT(total, "#,0")
 VAR a =
 "<div style='
     width:100%;
@@ -41,7 +41,7 @@ VAR a =
         padding:0;
         white-space:nowrap;
     '>
-            <div style='color:#B4B2A9;font-size:11px;line-height:1.1;font-weight:500;margin:0 0 4px 0;padding:0;'>总营收
+            <div style='color:#B4B2A9;font-size:11px;line-height:1.1;font-weight:500;margin:0 0 4px 0;padding:0;'>MCN佣金
             </div>
             <div
                 style='color:#FFFFFF;font-size:19px;line-height:1;font-weight:700;letter-spacing:0;margin:0;padding:0;'>

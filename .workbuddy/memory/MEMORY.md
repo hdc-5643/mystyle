@@ -53,3 +53,9 @@
   - 判断：RS 版 2.143 的 pageNavigator `shape` card 主题控制**疑似未实现或 bug**。用户决定先放弃，改用 accentBar + outline 模拟观感。
   - 当前 `PBI-Style-深蓝暗色-优化.json` 的 pageNavigator `shape` card 配置保留（语法对、校验通过、不影响其他），待后续 RS 版本验证。
   - 教训：schema 校验通过 ≠ 层级对 ≠ 运行时生效；property 可能属于 `*` item 或具体 card（shape/border/fill），且即使层级对，RS 版渲染器也可能不实现。
+
+## DateRangeSlicer 自定义视觉（2026-08-25）
+- 路径 `mystyle/visual/DateRangeSlicer/`，v1.1.0.0 起同时支持**「介于」**与**「下拉」**两种显示样式（格式面板 → 样式 → 显示样式切换）。
+- 下拉 = 原生字段值下拉：列出日期字段所有唯一值，支持单选/多选/全选，用 `BasicFilter`(Is/In) 下发，弹层挂 `document.body`。
+- 构建用 `pbiviz package`（managed node v22.22.2 + 项目内 node_modules）；导入 PBI Desktop 需先删旧实例再重导。
+- 详细坑点与代码模板见项目级 `pbi-custom-visual-dev` skill。

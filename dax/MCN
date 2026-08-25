@@ -1,0 +1,61 @@
+总营收HTML = 
+VAR total = [总营收]
+VAR totalFmt = FORMAT(total, "#,0")
+VAR a =
+"<div style='
+    width:100%;
+    height:64px;
+    background:#142436;
+    border:none;
+    border-radius:8px;
+    font-family:Segoe UI,sans-serif;
+    padding:0;
+    margin:0;
+    box-sizing:border-box;
+    overflow:hidden;
+    display:table;
+'>"
+    &
+    "<div style='
+        display:table-cell;
+        vertical-align:middle;
+        text-align:center;
+        padding:0;
+    '>"
+        &
+        "<span
+            style='display:inline-block;vertical-align:middle;text-align:left;line-height:normal;position:relative;top:4px;'>"
+            &
+            "<svg width='30' height='30' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg' aria-label='佣金收入'
+                style='display:inline-block;vertical-align:middle;margin:0 10px 0 0;padding:0;'>
+                <circle cx='12' cy='14' r='8' fill='#378ADD' fill-opacity='0.18' stroke='#378ADD' stroke-width='2' />
+                <path d='M9 10L12 14L15 10M12 14V19M9.5 15.5H14.5M9.5 17.5H14.5' fill='none' stroke='#FFFFFF'
+                    stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' />
+                <circle cx='24' cy='23' r='4' fill='#142436' stroke='#8CBDF2' stroke-width='1.8' />
+                <path d='M22.5 23L23.5 24L25.5 21.8' fill='none' stroke='#FFFFFF' stroke-width='1.4'
+                    stroke-linecap='round' stroke-linejoin='round' />
+            </svg>"
+            &
+            "<div style='
+        display:inline-block;
+        vertical-align:middle;
+        text-align:left;
+        margin:0;
+        padding:0;
+        white-space:nowrap;
+    '>
+                <div style='color:#B4B2A9;font-size:11px;line-height:1.1;font-weight:500;margin:0 0 4px 0;padding:0;'>
+                    总营收
+                </div>
+                <div
+                    style='color:#FFFFFF;font-size:19px;line-height:1;font-weight:700;letter-spacing:0;margin:0;padding:0;'>
+                    "
+                    & totalFmt
+                    & "</div>
+            </div>"
+            &
+            "</span>
+    </div>
+</div>"
+RETURN
+a

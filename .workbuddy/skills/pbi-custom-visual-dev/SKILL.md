@@ -56,13 +56,10 @@ agent_created: true
 
 ### 一键构建+部署脚本（本项目）
 ```bash
-cd "C:\Users\hdc\Desktop\营收概况\visual\DateRangeSlicer" && \
-"C:\Users\hdc\.workbuddy\binaries\node\versions\22.22.2\node.exe" \
-"C:\Users\hdc\.workbuddy\binaries\node\versions\22.22.2\node_modules\npm\bin\npm-cli.js" run package && \
-cp "dist\DateRangeSlicer20260822001.1.0.0.0.pbiviz" \
-   "C:\Users\hdc\Desktop\营收概况\visual\DateRangeSlicer20260822001.1.0.0.0.pbiviz"
+cd "E:\Users\Administrator\Desktop\营收概况\mystyle\visual\DateRangeSlicer" && \
+./node_modules/.bin/pbiviz package
 ```
-产物同时留在 dist 和项目根，方便交付。
+产物在 `dist/DateRangeSlicer20260822001.<version>.pbiviz`（version 见 `pbiviz.json`）。首次构建若报证书缺失，工具会自动生成测试证书。
 
 ## 二、input[type=date] 原生行为（最核心的坑）
 
@@ -138,3 +135,115 @@ input.value 为空时，浏览器日历无定位日期，会跳到 `max` 属性�
 
 - 把 target/数据 min/max/筛选 conditions 写进 `labelEl.title`（hover 看 tooltip），是最快的现场排查手段。
 - 初始/清除后行为用激活态显式管理，别靠"input 是否为空"隐式推断——空值会带来坑5 的日历定位问题。
+
+## 七、新增「下拉」样式（单选/多选/全选，v1.1.0.0）
+
+用户要的是**原生字段值下拉**（日期拉入默认下拉、列出所有唯一日期值、单选/多选/全选），不是预设范围（今日/本周/本月）。
+
+### capabilities.json
+- 新增 `style` 对象：`mode` 枚举（between/dropdown，displayName 介于/下拉）。
+- `selection` 对象 bool：`singleSelect`(单选)、`ctrlMultiSelect`(使用 Ctrl 多选)、`showSelectAll`(显示"全选"项)、`searchEnabled`(显示搜索框)、`searchPlaceholder`(搜索框提示文字)。**默认值在 `DEFAULTS` 控制（不是 capabilities，见章节末尾）**。
+- `general.filter` 已存在（介于用到），下拉复用同一筛选通道，无需新增。
+
+### 代码结构（update 里按 style 分支）
+- `this.style = settings.style`；`applyStyles()` 里切换 `inputsEl`/`dropdownEl` 的 `display`，并在切离下拉时 `closeDropdown()`。
+- 下拉 DOM：触发器 `.drs-dropdown-trigger`（收起显示当前值/占位"所有"）+ 弹出层挂 `document.body`（见下）。
+- `resolveRange` 顺带构建 `dateValues`（唯一日期值**降序**，dedup 用 `toDateInput` 的 yyyy-mm-dd 作 key）。
+- 选中态 `selectedKeys: Set<string>`（key = yyyy-mm-dd）。
+- 有效多选（isEffectiveMulti）：`!singleSelect`（只要不是真单选即为多选模式，筛选下发 In）。`ctrlMultiSelect` 只影响**交互方式**（见下），不改变"能否多选"。
+
+### 筛选：用 BasicFilter（不是 AdvancedFilter）
+- 全选（或"不显示全选项且未选任何"）→ `applyJsonFilter(null,...,remove)`。
+- 单选 → `new BasicFilter(target, "Is", value)`。
+- 多选 → `new BasicFilter(target, "In", [v1,v2,...])`。
+- 显示全选项但取消全选且未勾任何 → `BasicFilter("In", [])`（空数组=无命中，等价原生"筛选出空"）。
+
+### ⚠️ 关键 TS 坑：BasicFilterOperators 是 const enum
+- `powerbi-models` 的 `BasicFilterOperators` 是 **const enum**（编译期内联，运行时无对象），`BasicFilterOperators.Is` 当值用会报 `only refers to a type, but is being used as a value`。
+- 但 `BasicFilter` 构造的 operator 参数类型又是这个枚举类型，直接传字符串字面量 `"Is"` 会报 `not assignable to parameter of type 'BasicFilterOperators'`。
+- **正确写法（类型断言）**：`new BasicFilter(target, "Is" as BasicFilterOperators, value)`、`"In" as BasicFilterOperators`。运行时仍是字符串 `"Is"`/`"In"`，类型也满足。
+- 对比 `AdvancedFilter` 的 `"And"` 参数类型宽松，字符串字面量直接传即可（不用断言）。
+
+### 弹出层挂 document.body（避免被视觉容器 overflow:hidden 裁剪）
+- `popup.style.position = "fixed"` + `getBoundingClientRect()` 取触发器视口坐标定位（fixed 相对视口，坐标一致）。
+- `document.body.appendChild(popup)`；关闭时 `popup.remove()`。
+- 关闭时机：点触发器 toggle、点 popup 外（document click，延迟 0ms 注册避免吞掉本次打开点击）、`Esc`(keydown)。
+- 样式在 `.dateRangeSlicer` 作用域**外**顶层定义（`.drs-popup`），自带暗色 CSS 变量，因为 popup 已脱离 root 拿不到 root 的 `--drs-*`。
+
+### 弹出层必须真正置顶（z-index 踩坑，重要）
+- **症状**：下拉弹层点不动 / 勾了"没生效" / 选区不收起 —— 根因往往是弹层 `z-index` 不够高，被 PBI 画布/报表容器的 stacking context 压在下面，**点击穿透到了后面的报表**，checkbox 根本没收到点击（点外部能关是因为那次点击确实落在了报表上、触发了 document 关闭逻辑）。
+- **修法（一次到位）**：
+  - `.drs-popup { z-index: 2147483647; transform: translateZ(0); }` —— `translateZ(0)` 强制建独立 stacking context，防止被父级 stacking 困住。
+  - 加全局兜底 `body > .drs-popup { z-index: 2147483647 !important; transform: translateZ(0) !important; }`（弹层直接挂 body 下）。
+  - 仅 `z-index: 99999` 不够，PBI 某些容器层级更高。
+- **诊断口诀**：自定义视觉里任何浮层"点了没反应/像没生效"，先怀疑 z-index/stacking，而不是业务逻辑。
+
+### 下拉样式：浏览器原生 `<select>` 方案（v1.5.0.0 起）
+
+调研已发布 PBI 自定义视觉（powerbi-datepicker-slicer 用原生 `<select>`、微软官方 ChicletSlicer 不造弹层、CalendarPro 用 MUI Popover 但作者 commit 承认 iframe sandbox 隔离）后，自绘 DOM 弹层无法真正漂浮到 PBI 画布外。v1.5 起改用浏览器原生 `<select>`——唯一能 OS 级渲染、漂浮画布、不受 sandbox/overflow 裁剪的方案。
+
+- **单选模式**（开「单选」）：`<select>` 单选 → 浏览器原生下拉面板（OS 渲染漂浮画布上，关闭/收起由浏览器自动处理，不用自绘弹层逻辑）。
+- **多选模式**（默认）：`<select multiple size=8>` → 列表框（容器内显示，Ctrl/Shift 多选）。
+- **全选作第一项 option**：`<option value="__all__">全选</option>`，勾它=清空筛选=全选态。仅多选模式显示（单选不需要）。
+- **无搜索框**：原生 select 不支持搜索，`searchEnabled`/`searchPlaceholder` 已从 capabilities 删除。
+- **配置互斥**：开「单选」后 `getFormattingModel` 用 `...(selection.singleSelect ? [] : [Ctrl多选, 全选])` 隐藏另两个 slice（对齐原生切片器树形）。
+- **关键方法**：
+  - `renderNativeOptions()`：渲染 options（全选项+日期值，全选项仅多选显示）。
+  - `syncNativeSelect()`：程序化同步 selectedKeys→option.selected（update 后调用，不触发 change）。
+  - `onNativeChange()`：select change 事件 → 读 selectedOptions → 更新 selectedKeys → applyDropdownFilter。多选+全选项被选中时直接清空筛选。
+  - `updateDropdown`：按 `singleSelect` 设 `select.multiple`+`size`（单选=1、多选=8）；数据变化时 renderNativeOptions；末尾 syncNativeSelect。
+- **默认值**（由 `DEFAULTS` 控制，capabilities 的 bool 不声明默认、PBI 一律视为 false）：单选=关、Ctrl 多选=开、显示"全选"项=关。
+- **筛选下发**：仍用 `BasicFilter`（Is/In），`isEffectiveMulti()=!singleSelect` 决定 Is 还是 In。
+- **模式切换收敛**：`coerceSingleSelection`（多选≥2 切单选取首项）保留；单选切多选 selectedKeys 不清空。
+- **样式**：`.drs-native-select`（暗色背景/边框/圆角/字体，`&[multiple]` 列表框样式，`option` 暗色）。下拉面板本身多数由 OS 渲染无法定制（深色主题改不了下拉面板，仅 select 本体可改）。
+
+### ⚠️ 自绘 DOM 弹层方案的坑（v1.1–v1.4 用过，v1.5 已废弃）
+- v1.1–v1.4 曾用自绘弹层（trigger + popup 挂 document.body + fixed + z-index 2147483647 + ClickAway + Esc 关闭），实测在 PBI sandboxed iframe 内**无法真正漂浮到画布外**：`document.body` 是 iframe 内的 body，弹层只飘在 iframe 内、出不了 visual 容器边界；点 PBI 画布其他 visual/空白不会触发本 iframe 的 document click（事件不跨 iframe）。
+- v1.3 把"点击穿透/没生效"误判为 z-index 不够（实际是 iframe sandbox 隔离），z-index 修复只解了"弹层被其他视觉压住看不见"，没解"点画布别处关闭"。
+- v1.5 改原生 select 后这些坑全部规避（OS 渲染不受 sandbox 限制）。后续若要恢复自绘弹层，需引入 `@floating-ui/dom` 做边界避让 + 接受"弹层在 visual 容器内、不能飘出 iframe"的视觉。
+
+### 回显与跨样式切换
+- `options.jsonFilters[0]` 若含 `conditions` → 介于筛选（AdvancedFilter）；否则 `operator==="Is"/"In"` → 下拉筛选（BasicFilter）。
+- 切到下拉却收到遗留的介于筛选（有 conditions）→ 清空 remove 并进入默认全选。
+- 切回介于却收到遗留的下拉筛选（无 conditions）→ 清空 remove，走介于默认。
+- 数据刷新后剔除已不在 `dateValues` 的选中 key，防止下发失效筛选。
+
+## 八、PBI Desktop 自定义视觉对象缓存机制（更新 .pbiviz 不生效的根因）
+
+### 现象
+- `pbiviz package` 重新构建完成、产物确实包含新代码（解包 .pbiviz 验证 capabilities.json 与 .pbiviz.json 内嵌内容都对了）
+- PBI Desktop 里"先删旧实例 → 重新导入"也做了
+- 但格式面板仍看不到新加的卡片/选项，渲染行为仍是旧版本
+
+### 根因
+PBI Desktop 用 **GUID 作为视觉对象插件的唯一标识**。同名（同 GUID）的 .pbiviz 重新导入时，PBI 把它当作"插件更新"，**沿用已经加载到内存里的旧实例**（JS/CSS 都来自上次缓存），新版代码实际上没被加载。
+
+光升 `version` 字段不管用——GUID 一致，PBI 就认旧资源。
+
+### 唯一稳妥的解法：换 GUID
+每次做不兼容更新（capabilities.json 改了、新增卡片/枚举、改 displayName），改 `pbiviz.json` 里的 GUID：
+```json
+"visual": {
+  "guid": "<新唯一值，旧 GUID 末位/中间改一个字母或数字>",
+  ...
+}
+```
+让 PBI Desktop 把它当全新视觉对象导入，就能强制加载新 .pbiviz 里的所有资源。
+
+代价：同名但不同 GUID 的视觉对象会在 PBI 视觉对象面板里并存（两份 "日期区间切片器"）。需要的话在 `pbiviz.json` 的 `displayName` 上加版本后缀给视觉对象辨认：`"displayName": "日期区间切片器 v1.2"`。
+
+### 验证产物是否真的包含新代码
+光看文件大小/时间戳不可靠。**权威办法**：解包 .pbiviz 看内嵌 manifest：
+```powershell
+# .pbiviz 本质是 .tgz，powerbi-visuals-tools 把它打成 zip 兼容扩展名
+$src = "...\dist\YourGUID.1.2.0.0.pbiviz"
+$zip = "$env:TEMP\check.zip"
+Copy-Item $src $zip -Force
+$d = "$env:TEMP\pbiviz_check"
+if (Test-Path $d) { Remove-Item $d -Recurse -Force }
+Expand-Archive -Path $zip -DestinationPath $d -Force
+# resources/<YourGUID>.pbiviz.json 是内嵌 manifest，含 visualEntryPoint(JS)+capabilities+style(CSS)
+Select-String -Path (Join-Path $d 'resources\<YourGUID>.pbiviz.json') `
+  -Pattern '"version"|"displayName":\s*"(你的新项)|"value":\s*"(你的新枚举值)"'
+```
+匹配到就说明打包正确；如果用户反馈看不到，先看是不是 GUID 没换。

@@ -1,0 +1,8 @@
+总营收HTML = 
+VAR total = [总营收]
+VAR totalFmt = FORMAT(total, "#,0")
+
+
+MCNHTML = 
+VAR total = [MCN-结算机构佣金]
+VAR totalFmt = "¥" & FORMAT(total, "#,0")

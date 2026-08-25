@@ -174,6 +174,44 @@
                             }
                         }
                     }
+                },
+                "singleSelect": {
+                    "displayName": "单选",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "ctrlMultiSelect": {
+                    "displayName": "使用 Ctrl 多选",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "showSelectAll": {
+                    "displayName": "显示“全选”项",
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
+        },
+        "style": {
+            "displayName": "样式",
+            "properties": {
+                "mode": {
+                    "displayName": "显示样式",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "value": "between",
+                                "displayName": "介于"
+                            },
+                            {
+                                "value": "dropdown",
+                                "displayName": "下拉"
+                            }
+                        ]
+                    }
                 }
             }
         },
