@@ -1,0 +1,135 @@
+table 日期表-支付
+	lineageTag: a7fced97-8ea5-446b-bdd6-fc163c736cec
+
+	column Date
+		formatString: General Date
+		lineageTag: fb7664c3-b30e-4acf-af7a-06859034d26e
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Date]
+
+		variation 变体
+			isDefault
+			relationship: d82921b3-f5f8-42fd-8305-f79ac4665326
+			defaultHierarchy: LocalDateTable_f485904e-5ab8-48a5-98d1-818af437c2b0.日期层次结构
+
+		annotation SummarizationSetBy = Automatic
+
+	column 支付日期
+		formatString: m\月d\日
+		lineageTag: 6e13b8d5-d0a3-4c23-a266-2d992dda41e2
+		summarizeBy: none
+		sourceColumn: [日期]
+
+		variation 变体
+			isDefault
+			relationship: f48a1402-5b34-4641-9ee4-33cfc69ea70b
+			defaultHierarchy: LocalDateTable_5725bf6d-5fe8-497c-bf34-0b362e449864.日期层次结构
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+	column 年份
+		formatString: 0
+		lineageTag: b44188dc-d9ad-4cf2-ac6a-d125af4ade6c
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [年份]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 季度
+		lineageTag: ddb7f9c6-7276-4583-834f-621ef9556bf7
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [季度]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 月份号
+		formatString: 0
+		lineageTag: a10bb7de-d2ce-4bd2-9176-827101fe933c
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [月份号]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 月份名称
+		lineageTag: f898e766-6a4c-458f-81bd-8a4f73354d0c
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [月份名称]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 周数
+		formatString: 0
+		lineageTag: 0fea0178-d1f8-4e8d-8763-cb98a2dc9639
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [周数]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 星期几号
+		formatString: 0
+		lineageTag: df16ed85-a7bb-4dae-b71e-dfa30b16f99c
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [星期几号]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 星期几名称
+		lineageTag: 697bd67f-6c78-48c6-bf74-5ff41df03ea0
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [星期几名称]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 年月
+		lineageTag: d53cfd3a-10dd-4822-b8b6-4e2dfd3009ec
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [年月]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 年月排序
+		lineageTag: 595cd907-85f5-4f98-9eb7-24c095c4ac7a
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [年月排序]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 日期表-支付 = calculated
+		mode: import
+		source = ```
+				
+				VAR stardate = MIN('猿推库团长订单'[支付日期])  
+				VAR enddate = MAX('猿推库团长订单'[支付日期])
+				
+				RETURN
+				ADDCOLUMNS (
+				    CALENDAR (stardate, enddate),
+				    "日期", [Date],
+				    "年份", YEAR([Date]),
+				    "季度", "第" & QUARTER([Date]) & "季度",
+				    "月份号", MONTH([Date]),
+				    "月份名称", FORMAT([Date], "MMMM"),
+				    "周数", WEEKNUM([Date], 2),
+				    "星期几号", WEEKDAY([Date], 2),
+				    "星期几名称", FORMAT([Date], "dddd"),
+				    "年月", FORMAT([Date], "YYYY-MM"),
+				    "年月排序", FORMAT([Date], "YYYYMM")
+				)
+				```
+
+	annotation PBI_Id = 4c6dae817ed3433b9c4c2445a69e4d67
+

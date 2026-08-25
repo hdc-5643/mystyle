@@ -1,0 +1,62 @@
+relationship 9ea05630-681d-4cf1-9352-606a1f104324
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 日期表-结算.Date
+	toColumn: LocalDateTable_6e5f8789-41e7-4a97-abee-e8e029161ee9.Date
+
+relationship b45db315-336c-4d11-8eed-0079a02c0cd6
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 日期表-结算.结算日期
+	toColumn: LocalDateTable_76730b58-0cf4-41bc-b89a-9e20daa40577.Date
+
+relationship 0ae7476b-b2b5-f218-61a1-5e561e382b7b
+	fromColumn: 猿推库团长订单.结算日期
+	toColumn: 日期表-结算.结算日期
+
+relationship 2516a27e-70ed-fc23-6b18-b9c27d46d085
+	fromColumn: 智趣团长订单.结算日期
+	toColumn: 日期表-结算.结算日期
+
+relationship 52d027ac-6a74-de8c-cc50-56d2c8a0d8b1
+	fromColumn: 星图提报管理.激活日期
+	toColumn: 日期表-结算.结算日期
+
+relationship d2b3c945-6e95-4d52-908a-71b38a0ef128
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 星图提报管理.提报日期
+	toColumn: LocalDateTable_a9041877-f697-4a46-8422-abe00907b8e5.Date
+
+relationship ad6ec117-4a73-460f-88c8-65ff6b13047e
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 星图提报管理.完成日期
+	toColumn: LocalDateTable_cb2cb40d-be3b-4a51-a8ad-d74fbf519b34.Date
+
+relationship 26bb59a7-1be4-6198-a90f-ec411c9141a4
+	fromColumn: MCN.结算日期
+	toColumn: 日期表-结算.结算日期
+
+relationship d82921b3-f5f8-42fd-8305-f79ac4665326
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 日期表-支付.Date
+	toColumn: LocalDateTable_f485904e-5ab8-48a5-98d1-818af437c2b0.Date
+
+relationship f48a1402-5b34-4641-9ee4-33cfc69ea70b
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 日期表-支付.支付日期
+	toColumn: LocalDateTable_5725bf6d-5fe8-497c-bf34-0b362e449864.Date
+
+relationship 3aa5a213-7c7e-8cac-70dd-637607e5a18d
+	fromColumn: MCN.支付日期
+	toColumn: 日期表-支付.支付日期
+
+relationship 3e456276-8c46-1b1d-a68d-5f55d2e4d49d
+	fromColumn: 星图提报管理.激活日期
+	toColumn: 日期表-支付.支付日期
+
+relationship 69eeb3c6-d03a-d4b4-25dc-befbec1a6fe6
+	fromColumn: 猿推库团长订单.支付日期
+	toColumn: 日期表-支付.支付日期
+
+relationship 348189b2-074e-67b0-22cd-b952077d41c0
+	fromColumn: 智趣团长订单.支付日期
+	toColumn: 日期表-支付.支付日期
+

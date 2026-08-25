@@ -1,0 +1,72 @@
+总营收_卡片 =
+VAR total = [总营收]
+VAR totalFmt = FORMAT(total, "#,0")
+VAR a =
+"<div style='
+    width:100%;
+    min-height:64px;
+    background:#142436;
+    border:none;
+    border-radius:8px;
+    font-family:Segoe UI,sans-serif;
+    padding:20px 10px 4px 10px;
+    margin:0;
+    box-sizing:border-box;
+    overflow:hidden;
+    text-align:center;
+'>"
+    &
+    "<div style='
+        display:inline-block;
+        vertical-align:middle;
+        margin:0;
+        padding:0;
+    '>"
+
+        &
+        "<svg width='30' height='30' viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg' aria-label='总营收'
+            style='display:inline-block;vertical-align:middle;margin:0 10px 0 0;padding:0;'>
+            <path d='M3 25 V20 M9 25 V16 M15 25 V12 M21 25 V8 M27 25 V4' fill='none' stroke='#378ADD' stroke-width='3.2'
+                stroke-linecap='round' />
+            <path d='M3 19 L9 15 L15 16 L21 9 L27 5 V25 H3 Z' fill='#378ADD' fill-opacity='0.14' />
+            <path d='M3 19 L9 15 L15 16 L21 9 L27 5' fill='none' stroke='#8CBDF2' stroke-width='1.8'
+                stroke-linecap='round' stroke-linejoin='round' />
+            <circle cx='27' cy='5' r='2' fill='#FFFFFF' />
+        </svg>"
+
+        &
+        "<div style='
+        display:inline-block;
+        vertical-align:middle;
+        text-align:left;
+        margin:0;
+        padding:0;
+        white-space:nowrap;
+    '>
+            <div style='
+            color:#B4B2A9;
+            font-size:11px;
+            line-height:1.1;
+            font-weight:500;
+            margin:0 0 4px 0;
+            padding:0;
+        '>总营收</div>
+
+            <div style='
+            color:#FFFFFF;
+            font-size:19px;
+            line-height:1;
+            font-weight:700;
+            letter-spacing:0;
+            margin:0;
+            padding:0;
+        '>"
+                & totalFmt
+                & "</div>
+        </div>"
+
+        &
+        "</div>
+</div>"
+RETURN
+a

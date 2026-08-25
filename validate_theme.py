@@ -4,10 +4,11 @@
 校验 Power BI 主题 JSON 是否符合 reportThemeSchema-2.143.json。
 用法（在本工作空间内）：
     .venv/Scripts/python.exe validate_theme.py
-    .venv/Scripts/python.exe validate_theme.py PBI-Style-深蓝暗色.json
+    .venv/Scripts/python.exe validate_theme.py theme/PBI-Style-深蓝暗色.json
 说明：
+    - schema 与主题文件均在 theme/ 子目录下（git clone 后结构）。
     - schema 文件带 UTF-8 BOM，统一用 utf-8-sig 读取。
-    - 默认校验 PBI-Style-深蓝暗色.json；可传入其他主题文件路径。
+    - 默认校验 theme/PBI-Style-深蓝暗色.json；可传入其他主题文件路径。
     - 主题文件命名约定：PBI-Style-"主题"（如 PBI-Style-深蓝暗色.json）。
 """
 import json
@@ -17,8 +18,8 @@ from pathlib import Path
 from jsonschema import Draft7Validator
 
 HERE = Path(__file__).resolve().parent
-SCHEMA = HERE / "reportThemeSchema-2.143.json"
-DEFAULT_THEME = HERE / "PBI-Style-深蓝暗色.json"
+SCHEMA = HERE / "theme" / "reportThemeSchema-2.143.json"
+DEFAULT_THEME = HERE / "theme" / "PBI-Style-深蓝暗色.json"
 
 
 def main():

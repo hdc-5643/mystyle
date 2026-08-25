@@ -1,0 +1,31 @@
+model Model
+	culture: zh-CN
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: zh-CN
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation PBI_QueryOrder = ["智趣团长订单","猿推库团长订单","星图提报管理","ServerName","MCN"]
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBIDesktopVersion = 2.143.4379.0 (25.05)+a141f42c390a252ef694b8cffbd48552c577c79d
+
+ref table 智趣团长订单
+ref table DateTableTemplate_8687669f-8473-40e4-86ff-991627ce7f02
+ref table 猿推库团长订单
+ref table 度量值
+ref table 日期表-结算
+ref table LocalDateTable_6e5f8789-41e7-4a97-abee-e8e029161ee9
+ref table LocalDateTable_76730b58-0cf4-41bc-b89a-9e20daa40577
+ref table 星图提报管理
+ref table LocalDateTable_a9041877-f697-4a46-8422-abe00907b8e5
+ref table LocalDateTable_cb2cb40d-be3b-4a51-a8ad-d74fbf519b34
+ref table MCN
+ref table 日期表-支付
+ref table LocalDateTable_f485904e-5ab8-48a5-98d1-818af437c2b0
+ref table LocalDateTable_5725bf6d-5fe8-497c-bf34-0b362e449864
+
+ref cultureInfo zh-CN
+

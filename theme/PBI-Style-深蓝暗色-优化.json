@@ -291,7 +291,8 @@
             "fontFamily": "Segoe UI",
             "fontSize": 12,
             "top": 5,
-            "bottom": 5
+            "bottom": 5,
+            "showHiddenPages": false
           }
         ],
         "border": [
@@ -419,31 +420,12 @@
             }
           }
         ],
-        "accentBar": [
-          {
-            "$id": "default",
-            "show": false
-          },
-          {
-            "$id": "hover",
-            "show": false
-          },
-          {
-            "$id": "selected",
-            "color": {
-              "solid": {
-                "color": "#378ADD"
-              }
-            },
-            "position": "Left",
-            "show": true,
-            "width": 4
-          },
-          {
-            "$id": "disabled",
-            "show": false
-          }
-        ]
+    "shape": [
+      {
+        "tileShape": "rectangleRoundedByPixel",
+        "rectangleRoundedCurve": 12
+      }
+    ]
       }
     },
     "bookmarkNavigator": {

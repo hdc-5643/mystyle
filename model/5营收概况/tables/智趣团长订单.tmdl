@@ -1,0 +1,142 @@
+table 智趣团长订单
+	lineageTag: d13ba7c7-e087-46a6-9f1e-80a9b283998b
+
+	column 商品ID
+		dataType: string
+		lineageTag: b0046826-214c-47d8-b28d-bc27e3d5a885
+		summarizeBy: none
+		sourceColumn: 商品ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 商品名称
+		dataType: string
+		lineageTag: 526526d3-3b0c-4ae5-8c50-3544d66b33e4
+		summarizeBy: none
+		sourceColumn: 商品名称
+
+		annotation SummarizationSetBy = Automatic
+
+	column 结算日期
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 0bc2561a-4e94-4077-ae90-b2eae9b185aa
+		summarizeBy: none
+		sourceColumn: 结算日期
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 推广类型
+		dataType: string
+		lineageTag: b10a4590-00f3-47c8-bb3a-589993dab8f9
+		summarizeBy: none
+		sourceColumn: 推广类型
+
+		annotation SummarizationSetBy = Automatic
+
+	column 订单状态
+		dataType: string
+		lineageTag: 3d3469aa-4241-4109-8a93-28dccd9917df
+		summarizeBy: none
+		sourceColumn: 订单状态
+
+		annotation SummarizationSetBy = Automatic
+
+	column 业务类型
+		dataType: string
+		lineageTag: cee815eb-c515-4fb1-bae6-779c9113d383
+		summarizeBy: none
+		sourceColumn: 业务类型
+
+		annotation SummarizationSetBy = Automatic
+
+	column 订单数
+		dataType: double
+		lineageTag: dde3abed-08dd-459e-9290-cdf3ed3c25e5
+		summarizeBy: sum
+		sourceColumn: 订单数
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 达人数
+		dataType: double
+		lineageTag: 936df0d5-5c3b-4358-a494-07b3dd3aae24
+		summarizeBy: sum
+		sourceColumn: 达人数
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 总支付金额
+		dataType: double
+		lineageTag: 41d86083-bb0d-47a0-8634-df8562cfd801
+		summarizeBy: sum
+		sourceColumn: 总支付金额
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 总预估服务费收入
+		dataType: double
+		lineageTag: 9ba4e8ed-04f8-41b9-b182-96a0517a316c
+		summarizeBy: sum
+		sourceColumn: 总预估服务费收入
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 总实际服务费收入
+		dataType: double
+		lineageTag: 8cdc7d7c-614d-4c2f-b037-37f0eea4409c
+		summarizeBy: sum
+		sourceColumn: 总实际服务费收入
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 达人类型
+		dataType: string
+		lineageTag: 571704fb-5221-4d0f-b13e-15a1a5a8ccd9
+		summarizeBy: none
+		sourceColumn: 达人类型
+
+		annotation SummarizationSetBy = Automatic
+
+	column 支付日期
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 6da93da9-7218-4149-a353-e017f2ce90d1
+		summarizeBy: none
+		sourceColumn: 支付日期
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 展示名称 = '智趣团长订单'[商品名称]&'智趣团长订单'[商品ID]
+		lineageTag: 20757b48-a43a-4d1b-8269-8a1ac1d8cadc
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 智趣团长订单 = m
+		mode: import
+		source =
+				let
+				    源 = MySQL.Database(ServerName, "zhiqudb", [Query="SELECT #(lf)    a.ProductId AS 商品ID,#(lf)    p.ProductName AS 商品名称,#(lf)    DATE(FROM_UNIXTIME(a.PaySuccessTime)) AS 支付日期,#(lf)    CASE WHEN a.SettleTime = 0 THEN NULL ELSE DATE(FROM_UNIXTIME(a.SettleTime)) END AS 结算日期,#(lf)    CASE #(lf)        WHEN a.PromoterType = 1 THEN '团长'#(lf)        WHEN a.PromoterType = 2 THEN '达人'#(lf)        WHEN a.PromoterType = 3 THEN '抖客'#(lf)        ELSE '未知'#(lf)    END AS 推广类型,#(lf)    CASE a.FlowPoint#(lf)        WHEN 100 THEN '支付完成'#(lf)        WHEN 200 THEN '退款'#(lf)        WHEN 300 THEN '结算'#(lf)        WHEN 400 THEN '收货'#(lf)        ELSE '未知'#(lf)    END AS 订单状态,#(lf)    CASE COALESCE(b.BusinessType, 8)#(lf)        WHEN 8 THEN '千川'#(lf)        WHEN 16 THEN '星图'#(lf)        WHEN 24 THEN '千川_星图'#(lf)        ELSE '千川'#(lf)    END AS 业务类型,#(lf)    CASE #(lf)        WHEN a.AuthorShortId IN ('83445109489','48106830009','82537474588','47142756638','33231434484','okr888','us828272','chacha937','59797997683','qiumo778','nini5782164','anyue8889','wanyi8989','41897057545')#(lf)        THEN '直播号'#(lf)        ELSE '非直播'#(lf)    END AS 达人类型,#(lf)    COUNT(DISTINCT a.OrderId) AS 订单数,#(lf)    COUNT(DISTINCT a.yid) AS 达人数,#(lf)    SUM(a.PayGoodsAmount) / 100 AS 总支付金额,#(lf)    SUM(#(lf)        CASE#(lf)            WHEN a.ColonelType IN (0,1) THEN a.FirstEstimatedCommission#(lf)            WHEN a.ColonelType = 2 THEN a.SecondEstimatedCommission#(lf)            ELSE 0#(lf)        END#(lf)    ) / 100 AS 总预估服务费收入,#(lf)    SUM(#(lf)        CASE#(lf)            WHEN a.ColonelType IN (0,1) THEN a.FirstRealCommission#(lf)            WHEN a.ColonelType = 2 THEN a.SecondRealCommission#(lf)            ELSE 0#(lf)        END#(lf)    ) / 100 AS 总实际服务费收入#(lf)FROM zhiqudb.colonelorderinfo_1 a#(lf)JOIN (#(lf)    SELECT#(lf)        x.tenantid,#(lf)        x.InstitutionId,#(lf)        x.ProductId,#(lf)        COALESCE(#(lf)            MAX(CASE#(lf)                    WHEN x.ProductTitle IS NOT NULL#(lf)                     AND TRIM(x.ProductTitle) <> ''#(lf)                     AND x.ProductTitle <> '名称加载中'#(lf)                    THEN x.ProductTitle#(lf)                END),#(lf)            MAX(x.ProductTitle),#(lf)            '未知商品'#(lf)        ) AS ProductName#(lf)    FROM zhiqudb.colonelorderinfo_1 x#(lf)    WHERE x.tenantid = 1#(lf)      AND x.InstitutionId = 3422036060664914253#(lf)    GROUP BY x.tenantid, x.InstitutionId, x.ProductId#(lf)) p#(lf)  ON p.tenantid = a.tenantid#(lf) AND p.InstitutionId = a.InstitutionId#(lf) AND p.ProductId = a.ProductId#(lf)LEFT JOIN zhiqudb.tenantproductinfo b#(lf)  ON a.pid = b.id#(lf)WHERE a.tenantid = 1#(lf)  AND a.InstitutionId = 3422036060664914253#(lf)  AND (#(lf)      (a.PaySuccessTime >= UNIX_TIMESTAMP(DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 3 MONTH), '%Y-%m-01'))#(lf)       AND a.PaySuccessTime < UNIX_TIMESTAMP(CURDATE() + INTERVAL 1 DAY))#(lf)      OR#(lf)      (a.SettleTime >= UNIX_TIMESTAMP(DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 3 MONTH), '%Y-%m-01'))#(lf)       AND a.SettleTime < UNIX_TIMESTAMP(CURDATE() + INTERVAL 1 DAY))#(lf)  )#(lf)GROUP BY#(lf)    a.ProductId,#(lf)    p.ProductName,#(lf)    DATE(FROM_UNIXTIME(a.PaySuccessTime)),#(lf)    CASE WHEN a.SettleTime = 0 THEN NULL ELSE DATE(FROM_UNIXTIME(a.SettleTime)) END,#(lf)    CASE WHEN a.PromoterType = 1 THEN '团长'#(lf)         WHEN a.PromoterType = 2 THEN '达人'#(lf)         WHEN a.PromoterType = 3 THEN '抖客'#(lf)         ELSE '未知' END,#(lf)    CASE a.FlowPoint#(lf)         WHEN 100 THEN '支付完成'#(lf)         WHEN 200 THEN '退款'#(lf)         WHEN 300 THEN '结算'#(lf)         WHEN 400 THEN '收货'#(lf)         ELSE '未知' END,#(lf)    CASE COALESCE(b.BusinessType, 8)#(lf)         WHEN 8 THEN '千川'#(lf)         WHEN 16 THEN '星图'#(lf)         WHEN 24 THEN '千川_星图'#(lf)         ELSE '千川' END,#(lf)    CASE WHEN a.AuthorShortId IN ('83445109489','48106830009','82537474588','47142756638','33231434484','okr888','us828272','chacha937','59797997683','qiumo778','nini5782164','anyue8889','wanyi8989','41897057545')#(lf)         THEN '直播号'#(lf)         ELSE '非直播' END;#(lf)", ReturnSingleDatabase=true]),
+				    更改的类型 = Table.TransformColumnTypes(源,{{"结算日期", type date}, {"订单数", type number}, {"达人数", type number}, {"总支付金额", type number}, {"总预估服务费收入", type number}, {"总实际服务费收入", type number}, {"支付日期", type date}})
+				in
+				    更改的类型
+
+	annotation PBI_NavigationStepName = 导航
+
+	annotation PBI_ResultType = Table
+
