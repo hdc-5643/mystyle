@@ -235,6 +235,17 @@
                     }
                 }
             }
+        },
+        "defaultBehavior": {
+            "displayName": "默认行为",
+            "properties": {
+                "defaultThisMonth": {
+                    "displayName": "默认本月（最新日期所在月）",
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
         }
     }
 }

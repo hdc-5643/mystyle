@@ -4,8 +4,8 @@
     "displayName": "日期区间切片器",
     "guid": "DateRangeSlicer20260825004",
     "visualClassName": "DateRangeSlicer",
-    "version": "1.5.0.0",
-    "description": "左侧标签 + 两个深色圆角日期输入框（介于）或原生字段值下拉列表（单选/多选/全选），基于区间或等值筛选的自定义切片器",
+    "version": "1.9.1.0",
+    "description": "左侧标签 + 两个深色圆角日期输入框（介于）的自定义区间切片器，输入框边框/圆角/底色完全可控，绕开原生切片器输入框样式锁死",
     "supportUrl": "https://community.powerbi.com",
     "gitHubUrl": "https://github.com/"
   },

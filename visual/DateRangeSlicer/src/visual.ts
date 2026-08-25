@@ -11,7 +11,7 @@ import FormattingCard = powerbi.visuals.FormattingCard;
 import FormattingGroup = powerbi.visuals.FormattingGroup;
 import FormattingDescriptor = powerbi.visuals.FormattingDescriptor;
 
-import { AdvancedFilter, BasicFilter, BasicFilterOperators } from "powerbi-models";
+import { AdvancedFilter } from "powerbi-models";
 
 import "./../style/dateRangeSlicer.less";
 
@@ -31,20 +31,20 @@ const DEFAULTS = {
         italic: false,
         underline: false
     },
+    // 「介于」区间输入框样式（完全可控，绕开原生切片器输入框边框/圆角锁死）
     selection: {
         backgroundColor: "#142436",
         borderColor: "#2C4A6B",
         borderWidth: 1,
         borderRadius: 3,
-        accentColor: "#378ADD",
-        singleSelect: false,
-        ctrlMultiSelect: true,
-        showSelectAll: false
+        accentColor: "#378ADD"
     },
     labels: {
         fontColor: "#FFFFFF",
         fontSize: 12
-    }
+    },
+    // 「默认本月」：首次加载（且无已保存筛选）时自动将区间套为最新日期所在月（月首日→最新日期，MTD）
+    defaultThisMonth: false
 };
 
 export class DateRangeSlicer implements IVisual {
@@ -59,8 +59,6 @@ export class DateRangeSlicer implements IVisual {
     private endWrap: HTMLElement;
     private startValueEl: HTMLElement;
     private endValueEl: HTMLElement;
-    // 下拉样式相关 DOM：原生 <select>（单选=浏览器漂浮下拉，多选=列表框）
-    private nativeSelect: HTMLSelectElement;
 
     private rangeMin: Date | null = null;
     private rangeMax: Date | null = null;
@@ -73,13 +71,6 @@ export class DateRangeSlicer implements IVisual {
     private isInitialized = false;
     private lastTargetKey = "";
     private lastFilterPresent = false;
-
-    // 下拉样式状态
-    private dateValues: { date: Date; key: string }[] = []; // 降序排列的唯一日期值
-    private selectedKeys: Set<string> = new Set(); // 选中的 yyyy-mm-dd
-    private dropdownInitialized = false;
-    // 全选项的占位 value（选中它=清空筛选=全选态）
-    private static readonly ALL_VALUE = "__all__";
 
     constructor(options: VisualConstructorOptions) {
         this.host = options.host;
@@ -160,16 +151,8 @@ export class DateRangeSlicer implements IVisual {
         this.startEl.addEventListener("change", onChange);
         this.endEl.addEventListener("change", onChange);
 
-        // ---------- 下拉样式 DOM：原生 <select> ----------
-        // 单选模式：浏览器原生下拉面板（OS 渲染，漂浮在画布上不受 sandbox/overflow 裁剪）
-        // 多选模式：select multiple → 列表框（容器内显示，Ctrl/Shift 多选）
-        this.nativeSelect = document.createElement("select");
-        this.nativeSelect.className = "drs-native-select";
-        this.nativeSelect.addEventListener("change", () => this.onNativeChange());
-
         this.root.appendChild(this.headerEl);
         this.root.appendChild(this.inputsEl);
-        this.root.appendChild(this.nativeSelect);
 
         // 初始叠加层为空，待 update→resolveRange 计算出数据边界后再由 updateValueDisplay 填充
         this.updateValueDisplay();
@@ -193,14 +176,8 @@ export class DateRangeSlicer implements IVisual {
         const targetChanged = targetKey !== this.lastTargetKey;
         this.lastTargetKey = targetKey;
 
-        // 每次刷新都重新计算数据 min/max 与唯一日期值列表，保证边界与下拉项始终准确
+        // 每次刷新都重新计算数据 min/max，保证边界与系统日历可选范围始终准确
         this.resolveRange(dv);
-
-        // 下拉样式走独立分支
-        if (this.style === "dropdown") {
-            this.updateDropdown(dv, options, targetChanged);
-            return;
-        }
 
         // ---------- 介于样式逻辑 ----------
         const filterPresent = !!(options.jsonFilters && options.jsonFilters[0]);
@@ -215,7 +192,7 @@ export class DateRangeSlicer implements IVisual {
                 this.lastFilterPresent = true;
                 return;
             }
-            // 遗留的非介于型筛选（如下拉 Is/In）→ 与介于不兼容，清空并回到默认无筛选
+            // 非介于型筛选（如其它视觉下发的 Is/In）→ 与介于不兼容，清空并回到默认无筛选
             this.host.applyJsonFilter(null, "general", "filter", FilterAction.remove);
             this.startEl.value = this.rangeMin ? this.toDateInput(this.rangeMin) : "";
             this.endEl.value = this.rangeMax ? this.toDateInput(this.rangeMax) : "";
@@ -233,23 +210,14 @@ export class DateRangeSlicer implements IVisual {
         }
 
         // 外部清除筛选（如"清除所有筛选器"）后：filter 从有到无，
-        // 两侧都回到未激活，显示数据边界但不下发筛选
+        // 回到初始默认（默认本月=MTD，否则全量无筛选）
         if (this.lastFilterPresent && this.isInitialized) {
-            this.resetToRange();
-            this.updateValueDisplay();
-            this.applyBetweenFilter();
+            this.applyInitialDefault();
         }
 
-        // 首次加载或字段变化：初始默认两侧都未激活（无筛选），
-        // 输入框 value 自动恢复为数据边界值（开始=最小值，结束=最大值），仅叠加层显示，不参与筛选。
+        // 首次加载或字段变化：按「默认本月」开关决定初始区间（MTD 或全量无筛选）
         if (!this.isInitialized) {
-            this.startEl.value = this.rangeMin ? this.toDateInput(this.rangeMin) : "";
-            this.endEl.value = this.rangeMax ? this.toDateInput(this.rangeMax) : "";
-            this.startActive = false;
-            this.endActive = false;
-            this.updateValueDisplay();
-            this.applyBetweenFilter(); // 两侧皆未激活 → 移除筛选
-            this.isInitialized = true;
+            this.applyInitialDefault();
         }
 
         this.lastFilterPresent = false;
@@ -363,11 +331,11 @@ export class DateRangeSlicer implements IVisual {
         };
 
         const selectionCard: FormattingCard = {
-            displayName: "切片器设置",
+            displayName: "输入框样式",
             uid: "drs-selection-card",
             groups: [
                 {
-                    displayName: "选项",
+                    displayName: "外观",
                     uid: "drs-selection-options-group",
                     collapsible: true,
                     slices: [
@@ -395,25 +363,7 @@ export class DateRangeSlicer implements IVisual {
                             displayName: "强调色",
                             uid: "drs-selection-accent-picker",
                             control: colorPicker("selection", "accentColor", selection.accentColor)
-                        },
-                        {
-                            displayName: "单选",
-                            uid: "drs-selection-single-toggle",
-                            control: toggleSwitch("selection", "singleSelect", selection.singleSelect)
-                        },
-                        // 配置互斥：开「单选」后隐藏「Ctrl 多选」「全选」（对齐原生切片器树形）
-                        ...(selection.singleSelect ? [] : [
-                            {
-                                displayName: "使用 Ctrl 多选",
-                                uid: "drs-selection-ctrl-toggle",
-                                control: toggleSwitch("selection", "ctrlMultiSelect", selection.ctrlMultiSelect)
-                            },
-                            {
-                                displayName: "显示“全选”项",
-                                uid: "drs-selection-selectall-toggle",
-                                control: toggleSwitch("selection", "showSelectAll", selection.showSelectAll)
-                            }
-                        ])
+                        }
                     ]
                 }
             ]
@@ -443,29 +393,26 @@ export class DateRangeSlicer implements IVisual {
             ]
         };
 
-        const styleCard: FormattingCard = {
-            displayName: "样式",
-            uid: "drs-style-card",
+        const defaultBehaviorCard: FormattingCard = {
+            displayName: "默认行为",
+            uid: "drs-default-card",
             groups: [
                 {
-                    displayName: "显示",
-                    uid: "drs-style-group",
+                    displayName: "默认值",
+                    uid: "drs-default-group",
                     collapsible: true,
                     slices: [
                         {
-                            displayName: "显示样式",
-                            uid: "drs-style-mode-dropdown",
-                            control: dropdown("style", "mode", this.style, [
-                                { value: "between", displayName: "介于" },
-                                { value: "dropdown", displayName: "下拉" }
-                            ])
+                            displayName: "默认本月（最新日期所在月）",
+                            uid: "drs-default-thismonth-toggle",
+                            control: toggleSwitch("defaultBehavior", "defaultThisMonth", this.settings.defaultThisMonth)
                         }
                     ]
                 }
             ]
         };
 
-        return { cards: [styleCard, headerCard, selectionCard, labelsCard] };
+        return { cards: [headerCard, selectionCard, defaultBehaviorCard, labelsCard] };
     }
 
     private resolveTarget(dv: DataView): void {
@@ -514,7 +461,6 @@ export class DateRangeSlicer implements IVisual {
         try {
             const cats = dv.categorical && dv.categorical.categories;
             if (!cats || cats.length === 0 || !cats[0].values) {
-                this.dateValues = [];
                 return null;
             }
             const values = cats[0].values;
@@ -524,8 +470,6 @@ export class DateRangeSlicer implements IVisual {
             let min: Date | null = null;
             let max: Date | null = null;
             let count = 0;
-            const collected: { date: Date; key: string }[] = [];
-            const seen = new Set<string>();
             for (const v of values) {
                 const d = this.parseDate(v);
                 if (!d) {
@@ -538,16 +482,7 @@ export class DateRangeSlicer implements IVisual {
                 if (!max || d > max) {
                     max = d;
                 }
-                const key = this.toDateInput(d);
-                if (!seen.has(key)) {
-                    seen.add(key);
-                    collected.push({ date: d, key });
-                }
             }
-            // 下拉列表：唯一日期值降序（最新在前），与原生下拉一致
-            collected.sort((a, b) => b.date.getTime() - a.date.getTime());
-            this.dateValues = collected;
-
             if (count === 0) {
                 return null;
             }
@@ -563,8 +498,10 @@ export class DateRangeSlicer implements IVisual {
                 this.endEl.max = maxStr;
             }
             // 调试信息写入标题 tooltip，便于排查实际下发数据与筛选目标
+            // 注意：使用本地时区格式化，避免 toISOString() 输出 UTC 导致日期差 1 天（如 UTC 8/24 16:00 = 北京时间 8/25）
             if (min && max) {
-                this.labelEl.title = `target=${this.target.table}.${this.target.column}\nn=${values.length} valid=${count} truncated=${truncated}\nraw min=${min.toISOString()}\nraw max=${max.toISOString()}`;
+                const fmtLocal = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                this.labelEl.title = `target=${this.target.table}.${this.target.column}\nn=${values.length} valid=${count} truncated=${truncated}\nmin=${fmtLocal(min)} (local)\nmax=${fmtLocal(max)} (local)`;
             }
             return min && max ? { min, max, truncated } : null;
         } catch (e) {
@@ -618,23 +555,11 @@ export class DateRangeSlicer implements IVisual {
     }
 
     private toDisplayDate(d: Date): string {
-        // 显示格式 yyyy/m/d（月、日去前导零），与 HTML 顶栏日期框一致
-        return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
-    }
-
-    private keyToFilterValue(key: string): string {
-        // 与介于样式保持一致：本地午夜 → toJSON（UTC 字符串），
-        // Power BI 按本地时区回显为当天 00:00，确保与日期列存储表示一致而能命中。
-        const d = this.parseInputDate(key);
-        if (!d) {
-            return key;
-        }
-        return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toJSON();
-    }
-
-    private valueToKey(v: any): string | null {
-        const d = this.parseDate(v);
-        return d ? this.toDateInput(d) : null;
+        // 显示格式 yyyy-MM-dd（月、日补前导零），规整统一，用于介于叠加层
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
     }
 
     // ===================== 介于样式 =====================
@@ -686,12 +611,26 @@ export class DateRangeSlicer implements IVisual {
         }
     }
 
-    private resetToRange(): void {
-        // 外部清除筛选后，两侧回到未激活并自动恢复为数据边界值（开始=最小值，结束=最大值），不参与筛选。
-        this.startEl.value = this.rangeMin ? this.toDateInput(this.rangeMin) : "";
-        this.endEl.value = this.rangeMax ? this.toDateInput(this.rangeMax) : "";
-        this.startActive = false;
-        this.endActive = false;
+    private applyInitialDefault(): void {
+        // 首次加载 / 外部清除筛选后的初始态：
+        // 1) 开启「默认本月」且数据有最大值 → 区间 = [最新日期所在月首日, 最新日期]（MTD），随数据刷新自动跟进；
+        // 2) 否则 → 两侧未激活，显示数据边界但不下发筛选（全量）。
+        if (this.settings.defaultThisMonth && this.rangeMax) {
+            const maxD = this.rangeMax;
+            const monthStart = new Date(maxD.getFullYear(), maxD.getMonth(), 1); // 本地时区当月首日 00:00
+            this.startEl.value = this.toDateInput(monthStart);
+            this.endEl.value = this.toDateInput(maxD);
+            this.startActive = true;
+            this.endActive = true;
+        } else {
+            this.startEl.value = this.rangeMin ? this.toDateInput(this.rangeMin) : "";
+            this.endEl.value = this.rangeMax ? this.toDateInput(this.rangeMax) : "";
+            this.startActive = false;
+            this.endActive = false;
+        }
+        this.updateValueDisplay();
+        this.applyBetweenFilter();
+        this.isInitialized = true;
     }
 
     private applyBetweenFilter(): void {
@@ -756,243 +695,23 @@ export class DateRangeSlicer implements IVisual {
         return date;
     }
 
-    // ===================== 下拉样式 =====================
-
-    private isEffectiveMulti(): boolean {
-        // 非“单选”模式即为多选模式（可用 Ctrl 累加或直接多选），筛选下发 In
-        return !this.settings.selection.singleSelect;
-    }
-
-    private updateDropdown(dv: DataView, options: VisualUpdateOptions, targetChanged: boolean): void {
-        // 单/多选模式：单选=浏览器原生下拉（漂浮）；多选=select multiple 列表框（容器内）
-        const wantMulti = !this.settings.selection.singleSelect;
-        if (this.nativeSelect.multiple !== wantMulti) {
-            this.nativeSelect.multiple = wantMulti;
-            this.nativeSelect.size = wantMulti ? 8 : 1;
-        }
-
-        // 数据变化或首次渲染时重建 options
-        if (targetChanged || this.nativeSelect.options.length === 0) {
-            this.renderNativeOptions();
-        }
-
-        // 数据刷新后，剔除已不在数据范围内的选中项，避免下发失效筛选
-        const validKeys = new Set(this.dateValues.map((d) => d.key));
-        for (const k of Array.from(this.selectedKeys)) {
-            if (!validKeys.has(k)) {
-                this.selectedKeys.delete(k);
-            }
-        }
-
-        const filterPresent = !!(options.jsonFilters && options.jsonFilters[0]);
-
-        if (filterPresent) {
-            const f: any = options.jsonFilters[0];
-            if (f && f.conditions) {
-                // 遗留的「介于」筛选与下拉不兼容：清空并移除，下拉进入默认全选态
-                this.selectedKeys.clear();
-                this.host.applyJsonFilter(null, "general", "filter", FilterAction.remove);
-            } else {
-                this.restoreDropdownFilter(f);
-            }
-            this.coerceSingleSelection();
-            this.dropdownInitialized = true;
-            this.syncNativeSelect();
-            this.lastFilterPresent = true;
-            return;
-        }
-
-        if (targetChanged) {
-            this.dropdownInitialized = false;
-        }
-
-        // 外部清除筛选（如“清除所有筛选器”）：回到全选态（无筛选）
-        if (this.lastFilterPresent && this.dropdownInitialized) {
-            this.selectedKeys.clear();
-            this.applyDropdownFilter();
-        }
-
-        if (!this.dropdownInitialized) {
-            // 默认全选（无筛选）
-            this.selectedKeys.clear();
-            this.applyDropdownFilter();
-            this.dropdownInitialized = true;
-        }
-
-        this.coerceSingleSelection();
-        this.syncNativeSelect();
-        this.lastFilterPresent = false;
-    }
-
-    // 渲染 select options：可选的“全选”项 + 全部日期值（降序）
-    private renderNativeOptions(): void {
-        this.nativeSelect.innerHTML = "";
-        const showAll = this.settings.selection.showSelectAll;
-        // 多选模式才显示“全选”项（单选模式不需要，原生 select 单选默认就是单值）
-        if (showAll && this.nativeSelect.multiple) {
-            const allOpt = document.createElement("option");
-            allOpt.value = DateRangeSlicer.ALL_VALUE;
-            allOpt.textContent = "全选";
-            this.nativeSelect.appendChild(allOpt);
-        }
-        for (const item of this.dateValues) {
-            const opt = document.createElement("option");
-            opt.value = item.key;
-            opt.textContent = this.toDisplayDate(item.date);
-            this.nativeSelect.appendChild(opt);
-        }
-    }
-
-    // 把 selectedKeys 同步到 select 的选中态（程序化更新，不触发 change 事件）
-    private syncNativeSelect(): void {
-        const showAll = this.settings.selection.showSelectAll;
-        const total = this.dateValues.length;
-        // “全选态”判定：显示全选项时=已选满；不显示全选项时=未选任何=全部
-        const isAllState = showAll ? (total > 0 && this.selectedKeys.size === total) : (this.selectedKeys.size === 0);
-        const opts = this.nativeSelect.options;
-        for (let i = 0; i < opts.length; i++) {
-            const o = opts[i];
-            if (o.value === DateRangeSlicer.ALL_VALUE) {
-                o.selected = isAllState;
-            } else {
-                o.selected = this.selectedKeys.has(o.value);
-            }
-        }
-    }
-
-    // select change 事件：读选中项 → 更新 selectedKeys → 下发筛选
-    private onNativeChange(): void {
-        const showAll = this.settings.selection.showSelectAll;
-        const wantMulti = this.nativeSelect.multiple;
-
-        // 多选模式 + 显示全选项 + 全选项被选中 → 清空筛选（全选态）
-        if (wantMulti && showAll) {
-            const allOpt = Array.from(this.nativeSelect.options).find((o) => o.value === DateRangeSlicer.ALL_VALUE);
-            if (allOpt && allOpt.selected) {
-                this.selectedKeys.clear();
-                this.applyDropdownFilter();
-                this.syncNativeSelect();
-                return;
-            }
-        }
-
-        if (!wantMulti) {
-            // 单选模式：select.value 即选中值
-            const v = this.nativeSelect.value;
-            this.selectedKeys = v ? new Set([v]) : new Set();
-        } else {
-            // 多选模式：读所有选中项（排除全选项）
-            this.selectedKeys.clear();
-            for (const o of Array.from(this.nativeSelect.selectedOptions)) {
-                if (o.value !== DateRangeSlicer.ALL_VALUE) {
-                    this.selectedKeys.add(o.value);
-                }
-            }
-        }
-
-        this.applyDropdownFilter();
-    }
-
-    private restoreDropdownFilter(filter: any): void {
-        try {
-            this.selectedKeys.clear();
-            if (!filter) {
-                return;
-            }
-            if (filter.operator === "Is" && filter.values && filter.values.length) {
-                const k = this.valueToKey(filter.values[0]);
-                if (k) {
-                    this.selectedKeys.add(k);
-                }
-            } else if (filter.operator === "In" && filter.values) {
-                for (const v of filter.values) {
-                    const k = this.valueToKey(v);
-                    if (k) {
-                        this.selectedKeys.add(k);
-                    }
-                }
-            }
-        } catch (e) {
-            /* ignore */
-        }
-    }
-
-    // 单选模式收敛：多选（≥2）切到单选时保留第一个被选项，避免 radio 显示多个勾选
-    private coerceSingleSelection(): void {
-        if (this.settings.selection.singleSelect && this.selectedKeys.size > 1) {
-            const first = Array.from(this.selectedKeys)[0];
-            this.selectedKeys = new Set([first]);
-        }
-    }
-
-    private applyDropdownFilter(): void {
-        if (!this.target.table || !this.target.column) {
-            return;
-        }
-        const showAll = this.settings.selection.showSelectAll;
-        const total = this.dateValues.length;
-        const effectiveMulti = this.isEffectiveMulti();
-
-        // “全选”判定：显示全选项时=已选满；不显示全选项时=未选任何=全部
-        const isAll = showAll ? (total > 0 && this.selectedKeys.size === total) : (this.selectedKeys.size === 0);
-
-        if (isAll) {
-            this.host.applyJsonFilter(null, "general", "filter", FilterAction.remove);
-            this.labelEl.title = `target=${this.target.table}.${this.target.column}\n下拉：全选（无筛选）`;
-            return;
-        }
-
-        if (this.selectedKeys.size === 0) {
-            if (showAll) {
-                // 显示全选项且全选已取消、未勾选任何个体 → 原生语义：筛选为空（无命中）
-                const filter = new BasicFilter(this.target, "In" as BasicFilterOperators, [] as any);
-                this.host.applyJsonFilter(filter, "general", "filter", FilterAction.merge);
-            } else {
-                // 不显示全选项且未勾选任何个体 → 视为全部（无筛选）
-                this.host.applyJsonFilter(null, "general", "filter", FilterAction.remove);
-            }
-            return;
-        }
-
-        const values = Array.from(this.selectedKeys).map((key) => this.keyToFilterValue(key));
-        if (effectiveMulti) {
-            const filter = new BasicFilter(this.target, "In" as BasicFilterOperators, values as any);
-            this.host.applyJsonFilter(filter, "general", "filter", FilterAction.merge);
-            this.labelEl.title = `target=${this.target.table}.${this.target.column}\n下拉 IN(${values.length})`;
-        } else {
-            const filter = new BasicFilter(this.target, "Is" as BasicFilterOperators, values[0] as any);
-            this.host.applyJsonFilter(filter, "general", "filter", FilterAction.merge);
-            this.labelEl.title = `target=${this.target.table}.${this.target.column}\n下拉 Is=${values[0]}`;
-        }
-    }
-
-    // ===================== 通用 =====================
-
     private readSettings(dv: DataView): void {
-        const objs = (dv.metadata && dv.metadata.objects) || {};
-
-        const color = (v: any, fb: string): string =>
-            (v && v.solid && v.solid.color) ? v.solid.color : fb;
-        const num = (v: any, fb: number): number =>
-            (typeof v === "number" && !isNaN(v) && v > 0) ? v : fb;
-        // 允许 0 的数值（如圆角可以等于 0）
-        const numZero = (v: any, fb: number): number =>
-            (typeof v === "number" && !isNaN(v) && v >= 0) ? v : fb;
-        const clamp = (v: any, lo: number, hi: number, fb: number): number =>
-            (typeof v === "number" && !isNaN(v)) ? Math.min(hi, Math.max(lo, v)) : fb;
-        // 默认值升级迁移：旧默认值 11 在升级后自动过渡到新默认值，
-        // 避免 Power BI 持久化旧实例的格式值导致新默认值不生效。
-        const migrateFontSize = (v: any, oldDefault: number, newDefault: number): number => {
-            const val = clamp(v, 8, 100, newDefault);
-            return (val === oldDefault) ? newDefault : val;
-        };
-        const bool = (v: any, fb: boolean): boolean =>
-            (typeof v === "boolean") ? v : fb;
-        const txt = (v: any, fb: string): string =>
-            (typeof v === "string" && v.length > 0) ? v : fb;
-
-        // 兼容旧配置对象 dateRangeSlicer
+        const objs = (dv && dv.metadata && (dv.metadata as any).objects) || {};
         const legacy = objs.dateRangeSlicer || {};
+
+        const color = (v: any, fb: string): string => (v == null ? fb : (typeof v === "string" && v[0] === "#" ? v : (v.solid ? v.solid.color : fb)));
+        const num = (v: any, fb: number): number => (typeof v === "number" ? v : (v && typeof v.solid === "undefined" && !isNaN(Number(v)) ? Number(v) : fb));
+        const numZero = (v: any, fb: number): number => (v == null ? fb : (isNaN(Number(v)) ? fb : Number(v)));
+        const clamp = (v: any, lo: number, hi: number, fb: number): number => {
+            const n = numZero(v, fb);
+            return Math.max(lo, Math.min(hi, n));
+        };
+        const migrateFontSize = (v: any, oldDefault: number, newDefault: number): number => {
+            const n = numZero(v, newDefault);
+            return n === oldDefault ? newDefault : n;
+        };
+        const bool = (v: any, fb: boolean): boolean => (v == null ? fb : (v === true || v === "true" || v === 1 || v === "1"));
+        const txt = (v: any, fb: string): string => (v == null ? fb : (typeof v === "string" ? v : (v.solid ? v.solid.color : String(v))));
 
         this.settings.style = txt(objs.style && objs.style.mode, txt(legacy.style, DEFAULTS.style));
 
@@ -1015,13 +734,13 @@ export class DateRangeSlicer implements IVisual {
         this.settings.selection.borderWidth = clamp(s.borderWidth, 1, 100, DEFAULTS.selection.borderWidth);
         this.settings.selection.borderRadius = clamp(s.borderRadius, 0, 10, num(legacy.borderRadius, DEFAULTS.selection.borderRadius));
         this.settings.selection.accentColor = color(s.accentColor, color(legacy.accentColor, DEFAULTS.selection.accentColor));
-        this.settings.selection.singleSelect = bool(s.singleSelect, bool(legacy.singleSelect, DEFAULTS.selection.singleSelect));
-        this.settings.selection.ctrlMultiSelect = bool(s.ctrlMultiSelect, bool(legacy.ctrlMultiSelect, DEFAULTS.selection.ctrlMultiSelect));
-        this.settings.selection.showSelectAll = bool(s.showSelectAll, bool(legacy.showSelectAll, DEFAULTS.selection.showSelectAll));
 
         const l = objs.labels || {};
         this.settings.labels.fontColor = color(l.fontColor, color(legacy.foregroundColor, DEFAULTS.labels.fontColor));
         this.settings.labels.fontSize = migrateFontSize(l.fontSize, 11, DEFAULTS.labels.fontSize);
+
+        const db = objs.defaultBehavior || {};
+        this.settings.defaultThisMonth = bool(db.defaultThisMonth, DEFAULTS.defaultThisMonth);
     }
 
     private applyStyles(): void {
@@ -1043,6 +762,7 @@ export class DateRangeSlicer implements IVisual {
         this.labelEl.style.fontStyle = h.italic ? "italic" : "normal";
         this.labelEl.style.textDecoration = h.underline ? "underline" : "none";
 
+        // 「介于」输入框样式：完全自定义，绕开原生切片器输入框边框/圆角锁死
         this.root.style.setProperty("--drs-bg", s.backgroundColor);
         this.root.style.setProperty("--drs-fg", l.fontColor);
         this.root.style.setProperty("--drs-border", s.borderColor);
@@ -1050,10 +770,5 @@ export class DateRangeSlicer implements IVisual {
         this.root.style.setProperty("--drs-radius", `${s.borderRadius}px`);
         this.root.style.setProperty("--drs-border-width", `${s.borderWidth}px`);
         this.root.style.setProperty("--drs-label-size", `${l.fontSize}px`);
-
-        // 样式切换：介于 / 下拉 二选一显示
-        const isDropdown = this.style === "dropdown";
-        this.inputsEl.style.display = isDropdown ? "none" : "";
-        this.nativeSelect.style.display = isDropdown ? "" : "none";
     }
 }

@@ -152,39 +152,5 @@
         opacity: 0.7;
     }
 
-    // （下拉 trigger / text / caret 旧样式已移除，改用原生 <select>，见顶层 .drs-native-select）
-}
-
-// 原生 <select>：单选=浏览器漂浮下拉（OS 渲染、不受 sandbox 裁剪）；多选=select multiple 列表框（容器内显示）
-.drs-native-select {
-    flex: 1 1 auto;
-    min-width: 0;
-    background: var(--drs-bg);
-    color: var(--drs-fg);
-    border: var(--drs-border-width) solid var(--drs-border);
-    border-radius: var(--drs-radius);
-    padding: 6px 10px;
-    font-size: var(--drs-label-size);
-    font-family: "Segoe UI", "Microsoft YaHei", -apple-system, sans-serif;
-    line-height: 1.5;
-    outline: none;
-    cursor: pointer;
-    box-sizing: border-box;
-
-    &:hover,
-    &:focus {
-        border-color: var(--drs-accent);
-    }
-
-    // 多选列表框：固定行数、可滚动
-    &[multiple] {
-        cursor: default;
-        overflow-y: auto;
-    }
-
-    // 暗色 option（部分浏览器生效；下拉面板多数由 OS 渲染无法定制）
-    option {
-        background: var(--drs-bg);
-        color: var(--drs-fg);
-    }
+    // v1.9 起仅保留「介于」模式；下拉 trigger / 原生 select / DEBUG 面板相关样式已移除
 }
