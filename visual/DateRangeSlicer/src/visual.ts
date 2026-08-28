@@ -64,6 +64,7 @@ export class DateRangeSlicer implements IVisual {
     private root: HTMLElement;
     private headerEl: HTMLElement;
     private labelEl: HTMLElement;
+    private bodyEl: HTMLElement;
     private triggerEl: HTMLElement;
     private triggerTextEl: HTMLElement;
     private arrowEl: HTMLElement;
@@ -75,12 +76,18 @@ export class DateRangeSlicer implements IVisual {
     private customRange: { start: Date | null; end: Date | null } = { start: null, end: null };
     private docClickHandler: (e: MouseEvent) => void;
     private keyHandler: (e: KeyboardEvent) => void;
+    /** iframe 失焦回收：视觉对象失去焦点（用户点到 PBI 画布别处）时收起面板 */
+    private blurHandler: () => void;
+    /** 失焦判定的延时器 id（blur 瞬间 activeElement 尚未稳定，需延后一个宏任务再判定） */
+    private blurTimer: number = null;
     private rangeMin: Date | null = null;
     private rangeMax: Date | null = null;
     private target: { table: string; column: string } = { table: "", column: "" };
     private targetDisplayName: string = "";
     private settings = JSON.parse(JSON.stringify(DEFAULTS));
     private currentPreset: string = DEFAULTS.currentPreset;
+    // 上一次已写入 persistProperties 的预设名：值未变化时跳过写入，避免 update→persist→update 自激
+    private lastPersistedPreset: string | null = null;
     private isInitialized = false;
     private lastTargetKey = "";
     private lastFilterPresent = false;
@@ -99,6 +106,11 @@ export class DateRangeSlicer implements IVisual {
         this.labelEl.textContent = DEFAULTS.header.title;
 
         this.headerEl.appendChild(this.labelEl);
+
+        // 触发器与浮层面板的公共定位容器：面板 absolute 相对它定位，
+        // 使「标头位置=左侧」时面板仍然落在触发器正下方而不是排到右侧。
+        this.bodyEl = document.createElement("div");
+        this.bodyEl.className = "drs-body";
 
         // ---------- 第一层：单一触发器输入框（显示当前预设名/区间，点击展开面板） ----------
         this.triggerEl = document.createElement("div");
@@ -119,7 +131,8 @@ export class DateRangeSlicer implements IVisual {
         // ---------- 第二层：视觉内展开面板（占据区域，非浮层） ----------
         this.panelEl = document.createElement("div");
         this.panelEl.className = "drs-panel";
-        this.panelEl.style.display = "none";
+        // 显隐交给 class（.drs-panel-open），不用内联 style，
+        // 否则内联 display 会盖过 CSS 规则、导致展开动画与 flex gap 失效
 
         // 预设按钮组（两列网格）
         const presetGrid = document.createElement("div");
@@ -180,7 +193,20 @@ export class DateRangeSlicer implements IVisual {
         });
 
         this.docClickHandler = (e: MouseEvent) => {
-            if (this.isPanelOpen && !this.root.contains(e.target as Node)) {
+            if (!this.isPanelOpen) {
+                return;
+            }
+            const t = e.target as Node;
+            // 视觉外（iframe 内视觉容器之外）：直接收起
+            if (!this.root.contains(t)) {
+                this.closePanel();
+                return;
+            }
+            // 视觉内：除交互白名单（触发器 / 预设按钮 / 两个日期输入框）外一律收起。
+            // 注：本监听在 capture 阶段，早于 trigger 自身 bubble 阶段的 handler，
+            // 因此 triggerEl 必须在白名单内，否则「点触发器 → 判定为空白先关闭 →
+            // 随后 trigger handler 又 toggle 打开」，形成关不掉的开关死循环。
+            if (!this.isInteractiveTarget(t)) {
                 this.closePanel();
             }
         };
@@ -189,21 +215,40 @@ export class DateRangeSlicer implements IVisual {
                 this.closePanel();
             }
         };
+        this.blurHandler = () => {
+            if (!this.isPanelOpen) {
+                return;
+            }
+            // 延后一个宏任务：blur 触发瞬间 document.activeElement 尚未稳定
+            if (this.blurTimer !== null) {
+                window.clearTimeout(this.blurTimer);
+            }
+            this.blurTimer = window.setTimeout(() => this.evaluateBlurClose(), 0);
+        };
 
-        // 组装：标头 → 触发器 → 面板（视觉内展开）
+        // 组装：标头 → 主体（触发器 + 浮层面板，面板相对主体定位）
+        this.bodyEl.appendChild(this.triggerEl);
+        this.bodyEl.appendChild(this.panelEl);
         this.root.appendChild(this.headerEl);
-        this.root.appendChild(this.triggerEl);
-        this.root.appendChild(this.panelEl);
+        this.root.appendChild(this.bodyEl);
 
         options.element.appendChild(this.root);
     }
 
     public destroy(): void {
+        // 兜底清理：面板处于展开态时视觉被销毁，避免残留监听与待执行的失焦延时器
+        if (this.blurTimer !== null) {
+            window.clearTimeout(this.blurTimer);
+            this.blurTimer = null;
+        }
         if (this.docClickHandler) {
             document.removeEventListener("click", this.docClickHandler, true);
         }
         if (this.keyHandler) {
             document.removeEventListener("keydown", this.keyHandler, true);
+        }
+        if (this.blurHandler) {
+            window.removeEventListener("blur", this.blurHandler);
         }
     }
 
@@ -235,20 +280,21 @@ export class DateRangeSlicer implements IVisual {
         if (filterPresent) {
             const f: any = options.jsonFilters[0];
             if (f && f.conditions) {
-                // 切页恢复：从已保存筛选反推区间，匹配最接近的预设并高亮
-                const matched = this.matchPreset(f);
-                if (matched) {
-                    this.currentPreset = matched;
-                    this.customRange = { start: null, end: null };
-                    this.persistCurrentPreset(matched);
-                } else {
-                    // 自定义区间（误差>3天）：从筛选 conditions 反推起止显示
-                    const cr = this.reverseCustomRange(f);
-                    if (cr) {
+                // 切页恢复：从已保存筛选反推区间 → 精确匹配预设，命中则预设态，否则自定义态
+                const cr = this.reverseCustomRange(f);
+                if (cr) {
+                    const matched = this.exactMatchPreset(cr.start, cr.end);
+                    if (matched) {
+                        this.currentPreset = matched;
+                        this.customRange = { start: null, end: null };
+                        this.persistCurrentPreset(matched);
+                    } else {
+                        this.currentPreset = ""; // 自定义态：无预设名，不高亮任何预设
                         this.customRange = cr;
-                        this.syncDateInputs(cr.start, cr.end);
                     }
+                    this.syncDateInputs(cr.start, cr.end);
                 }
+                this.ensureInputsFilled();
                 this.deriveTriggerLabel();
                 this.updatePresetHighlight();
                 this.isInitialized = true;
@@ -282,6 +328,8 @@ export class DateRangeSlicer implements IVisual {
             this.applyPresetFilter(this.currentPreset);
         }
 
+        // 输入框始终有值（无预设无自定义时回填数据边界），不出现原生占位符
+        this.ensureInputsFilled();
         this.lastFilterPresent = false;
     }
 
@@ -648,9 +696,10 @@ export class DateRangeSlicer implements IVisual {
         if (!range) {
             return;
         }
-        // 选预设：清空自定义区间，回到预设态
+        // 选预设＝选定两个日期输入框：把预设对应的起止日期回填进输入框。
+        // 输入框始终有值，因此不会出现原生 yyyy/m/d 占位符。
         this.customRange = { start: null, end: null };
-        this.syncDateInputs(null, null);
+        this.syncDateInputs(range.start, range.end);
 
         // 开始日期：本地时区午夜，GreaterThanOrEqual
         const startDate = new Date(range.start.getFullYear(), range.start.getMonth(), range.start.getDate());
@@ -712,6 +761,13 @@ export class DateRangeSlicer implements IVisual {
             const t = start; start = end; end = t;
             this.syncDateInputs(start, end);
         }
+        // 关键联动：自定义日期若恰好等于某个预设，即视为选中该预设
+        // （预设高亮 + 触发器显示预设名 + 清空自定义态），而不是停在自定义态
+        const matched = this.exactMatchPreset(start, end);
+        if (matched) {
+            this.selectPreset(matched);
+            return;
+        }
         this.customRange = { start, end };
         this.applyCustomFilter(start, end);
     }
@@ -728,67 +784,54 @@ export class DateRangeSlicer implements IVisual {
         if (this.endInput) { this.endInput.value = fmt(end); }
     }
 
-    /** 从已保存筛选 conditions 反推区间，匹配最接近的预设（日期精度到天） */
-    private matchPreset(filter: any): string | null {
-        try {
-            if (!filter || !filter.conditions || filter.conditions.length === 0) {
-                return null;
-            }
-            let startVal: string = null;
-            let endVal: string = null;
-            for (const c of filter.conditions) {
-                if (!c || !c.value) {
-                    continue;
-                }
-                if (c.operator === "GreaterThanOrEqual") {
-                    startVal = c.value;
-                } else if (c.operator === "LessThan") {
-                    // LessThan 的 value 是结束日期的次日零点，需减一天得到实际结束日期
-                    const d = this.parseDate(c.value);
-                    if (d) {
-                        const ed = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
-                        endVal = this.toJSONLocal(ed);
-                    }
-                } else if (c.operator === "LessThanOrEqual") {
-                    endVal = c.value;
-                }
-            }
-            if (!startVal || !endVal) {
-                return null;
-            }
-            const sd = this.parseDate(startVal);
-            const ed = this.parseDate(endVal);
-            if (!sd || !ed) {
-                return null;
-            }
-            // 归一化到天级比较
-            const sDay = new Date(sd.getFullYear(), sd.getMonth(), sd.getDate());
-            const eDay = new Date(ed.getFullYear(), ed.getMonth(), ed.getDate());
-
-            let best: string | null = null;
-            let bestDiff = Infinity;
-            for (const p of PRESETS) {
-                const r = this.computePresetRange(p.key);
-                if (!r) {
-                    continue;
-                }
-                const rs = new Date(r.start.getFullYear(), r.start.getMonth(), r.start.getDate());
-                const re = new Date(r.end.getFullYear(), r.end.getMonth(), r.end.getDate());
-                const diff = Math.abs(rs.getTime() - sDay.getTime()) / 86400000
-                    + Math.abs(re.getTime() - eDay.getTime()) / 86400000;
-                if (diff < bestDiff) {
-                    bestDiff = diff;
-                    best = p.key;
-                }
-            }
-            // 误差超过 3 天视为不匹配（用户自定义区间），保持当前预设不变
-            return bestDiff <= 3 ? best : null;
-        } catch (e) {
-            return null;
+    /**
+     * 保证两个日期输入框始终有值，永不出现原生 yyyy/m/d 占位符。
+     * 优先级：已有值不动 → 自定义区间 → 当前预设区间 → 数据边界（全量态）。
+     */
+    private ensureInputsFilled(): void {
+        if (this.startInput && this.endInput && this.startInput.value && this.endInput.value) {
+            return;
+        }
+        if (this.customRange.start && this.customRange.end) {
+            this.syncDateInputs(this.customRange.start, this.customRange.end);
+            return;
+        }
+        const r = this.computePresetRange(this.currentPreset);
+        if (r) {
+            this.syncDateInputs(r.start, r.end);
+            return;
+        }
+        if (this.rangeMin && this.rangeMax) {
+            this.syncDateInputs(this.rangeMin, this.rangeMax);
         }
     }
 
-    /** 从已保存筛选 conditions 反推自定义起止（与 matchPreset 同源，用于切页恢复自定义区间显示） */
+    /**
+     * 精确匹配：起止日期是否「恰好等于」某个预设（天级比对，两端都必须相等）。
+     * 预设的本质就是给两个日期输入框赋一组值，所以只有真正等于预设时才算预设态；
+     * 此前使用的模糊匹配（误差≤3天即命中）会造成「选了 8/1–8/25 却高亮近30天」的误判，已移除。
+     */
+    private exactMatchPreset(start: Date, end: Date): string | null {
+        if (!start || !end) {
+            return null;
+        }
+        const sDay = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+        const eDay = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+        for (const p of PRESETS) {
+            const r = this.computePresetRange(p.key);
+            if (!r) {
+                continue;
+            }
+            const rs = new Date(r.start.getFullYear(), r.start.getMonth(), r.start.getDate()).getTime();
+            const re = new Date(r.end.getFullYear(), r.end.getMonth(), r.end.getDate()).getTime();
+            if (rs === sDay && re === eDay) {
+                return p.key;
+            }
+        }
+        return null;
+    }
+
+    /** 从已保存筛选 conditions 反推自定义起止（天级，用于切页恢复自定义区间显示与预设匹配） */
     private reverseCustomRange(filter: any): { start: Date; end: Date } | null {
         try {
             if (!filter || !filter.conditions || filter.conditions.length === 0) {
@@ -864,35 +907,138 @@ export class DateRangeSlicer implements IVisual {
         }
     }
 
-    /** 打开面板：视觉内展开，占据区域（display 切换，非浮层） */
+    /**
+     * 交互白名单：命中则保持面板展开，其余一切区域视为空白、点击即收起。
+     * 白名单＝触发器 + 5 个预设按钮 + 开始/结束日期输入框（含其内部节点，如日历图标）。
+     * 用白名单而非「是否在面板内」的黑名单，是为了满足「除交互元素外一律收起」的最严格判定：
+     * 面板内的 padding 空白、分隔箭头、标头文字等装饰性区域都不豁免。
+     */
+    private isInteractiveTarget(target: Node): boolean {
+        if (!target) {
+            return false;
+        }
+        if (this.triggerEl.contains(target)) {
+            return true;
+        }
+        if (this.startInput && this.startInput.contains(target)) {
+            return true;
+        }
+        if (this.endInput && this.endInput.contains(target)) {
+            return true;
+        }
+        for (const el of this.presetEls) {
+            if (el.contains(target)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 失焦判定（blur 后延后一个宏任务执行）：
+     * 1. iframe 仍持有焦点 → 说明用户还在本视觉内操作（如焦点在视觉内移动、原生日历打开），保持展开
+     * 2. 焦点已离开 iframe，但当前 activeElement 是日期输入框 → 系统日历正处于打开/选日期状态，
+     *    保持展开，避免打断用户选日期（明确要求：日历逻辑不变）
+     * 3. 其余情况（用户点到 PBI 画布任意其他位置）→ 收起
+     */
+    private evaluateBlurClose(): void {
+        this.blurTimer = null;
+        if (!this.isPanelOpen) {
+            return;
+        }
+        if (document.hasFocus && document.hasFocus()) {
+            return;
+        }
+        const active = document.activeElement;
+        if (active && (active === this.startInput || active === this.endInput)) {
+            return;
+        }
+        this.closePanel();
+    }
+
+    /** 打开面板：浮层下拉（absolute 相对 .drs-body），定位后绑定外部关闭监听 */
     private openPanel(): void {
         if (this.isPanelOpen) {
             return;
         }
-        this.panelEl.style.display = "block";
+        this.panelEl.classList.add("drs-panel-open");
+        this.positionPanel();
         this.triggerEl.classList.add("active");
-        this.arrowEl.textContent = "▴";
         this.isPanelOpen = true;
         document.addEventListener("click", this.docClickHandler, true);
         document.addEventListener("keydown", this.keyHandler, true);
+        // 点击 PBI 画布其他位置（iframe 之外）时，iframe 内的 document 收不到 click，
+        // 只能靠 iframe 级别的 window blur 来回收面板
+        window.addEventListener("blur", this.blurHandler);
     }
 
-    /** 关闭面板：解绑 document 监听 */
+    /**
+     * 浮层定位：默认浮在触发器正下方（盖住下方内容＝真正的下拉观感，不推挤布局）；
+     * 下方空间不足时自动翻向上方；限高在视觉可视区内 + 内部滚动，避免浮出视觉框被
+     * PBI 的 iframe overflow:hidden 裁切。上下都放不下最小可视高度时，退化为视觉内
+     * 流内展开（牺牲浮层观感换取内容可见）。
+     */
+    private positionPanel(): void {
+        const GAP = 4;          // 面板与触发器的间距
+        const MIN_VISIBLE = 100; // 判定「放得下」的最小可视高度
+
+        // 先解除上一轮的定位状态，量出面板自然高度
+        this.panelEl.style.maxHeight = "none";
+        this.panelEl.classList.remove("drs-panel-up", "drs-panel-inline");
+        this.root.classList.remove("drs-inline-mode");
+
+        const natural = this.panelEl.scrollHeight;
+        const rootRect = this.root.getBoundingClientRect();
+        const trigRect = this.triggerEl.getBoundingClientRect();
+        const spaceBelow = rootRect.bottom - trigRect.bottom - GAP;
+        const spaceAbove = trigRect.top - rootRect.top - GAP;
+
+        // 视觉框太矮（上下都放不下）→ 视觉内流内展开 + 容器滚动，保证内容看得见
+        if (Math.max(spaceBelow, spaceAbove) < MIN_VISIBLE) {
+            this.panelEl.classList.add("drs-panel-inline");
+            this.root.classList.add("drs-inline-mode");
+            this.panelEl.style.maxHeight = "";
+            return;
+        }
+
+        // 放不下自然高度且上方更宽裕 → 向上翻转
+        let up = false;
+        let avail = spaceBelow;
+        if (avail < natural && spaceAbove > avail) {
+            up = true;
+            avail = spaceAbove;
+        }
+        this.panelEl.classList.toggle("drs-panel-up", up);
+        // 兜底 60px：空间再小也让列表露出一部分并可滚动
+        this.panelEl.style.maxHeight = `${Math.max(60, Math.floor(avail))}px`;
+    }
+
+    /** 关闭面板：清理定位状态并解绑全部关闭监听 */
     private closePanel(): void {
+        if (this.blurTimer !== null) {
+            window.clearTimeout(this.blurTimer);
+            this.blurTimer = null;
+        }
         if (!this.isPanelOpen) {
             return;
         }
-        this.panelEl.style.display = "none";
+        this.panelEl.classList.remove("drs-panel-open", "drs-panel-up", "drs-panel-inline");
+        this.panelEl.style.maxHeight = "none";
+        this.root.classList.remove("drs-inline-mode");
         this.triggerEl.classList.remove("active");
-        this.arrowEl.textContent = "▾";
         this.isPanelOpen = false;
         document.removeEventListener("click", this.docClickHandler, true);
         document.removeEventListener("keydown", this.keyHandler, true);
+        window.removeEventListener("blur", this.blurHandler);
     }
 
-    /** 持久化 currentPreset：重开报表恢复用户上次选的预设 */
+    /** 持久化 currentPreset：重开报表恢复用户上次选的预设（值未变化则不写，避免 update 自激） */
     private persistCurrentPreset(preset: string): void {
         this.currentPreset = preset;
+        if (this.lastPersistedPreset === preset) {
+            return;
+        }
+        this.lastPersistedPreset = preset;
         try {
             this.host.persistProperties({
                 merge: [{ objectName: "state", selector: null, properties: { currentPreset: preset } }]
@@ -902,19 +1048,26 @@ export class DateRangeSlicer implements IVisual {
         }
     }
 
-    /** 持久化自定义区间（customStart/customEnd ISO 文本），并清掉预设名 */
+    /**
+     * 持久化自定义区间（customStart/customEnd ISO 文本），并清掉预设名。
+     * 注意：currentPreset 属于 state 对象，必须单独写 state，
+     * 写在 customRange 下（capabilities 未声明该属性）会被丢弃。
+     */
     private persistCustomRange(start: Date, end: Date): void {
+        this.lastPersistedPreset = "";
         try {
             this.host.persistProperties({
-                merge: [{
-                    objectName: "customRange",
-                    selector: null,
-                    properties: {
-                        customStart: this.toJSONLocal(start),
-                        customEnd: this.toJSONLocal(end),
-                        currentPreset: ""
+                merge: [
+                    { objectName: "state", selector: null, properties: { currentPreset: "" } },
+                    {
+                        objectName: "customRange",
+                        selector: null,
+                        properties: {
+                            customStart: this.toJSONLocal(start),
+                            customEnd: this.toJSONLocal(end)
+                        }
                     }
-                }]
+                ]
             });
         } catch (e) {
             /* ignore */
@@ -977,6 +1130,10 @@ export class DateRangeSlicer implements IVisual {
         const persistedPreset = txt(st.currentPreset, DEFAULTS.currentPreset);
         this.currentPreset = persistedPreset;
         this.settings.currentPreset = this.currentPreset;
+        // 报表里已持久化过 → 记为「已写入」，后续 update 不再重复 persist（防自激循环）
+        if (st.currentPreset !== undefined && st.currentPreset !== null) {
+            this.lastPersistedPreset = persistedPreset;
+        }
 
         // 自定义区间（持久化）：customStart/customEnd 均有值时恢复为自定义态
         const cr = objs.customRange || {};

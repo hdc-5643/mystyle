@@ -1,3 +1,36 @@
+## 2.4.3.0
+* **补齐下拉面板的收起（回收）机制**：此前点预设选项才会收起面板，点视觉内部空白（标头、面板 padding、分隔箭头、视觉容器边缘）或点报表画布其他位置都收不起来，面板会一直停留展开。本次补两条通道：
+  * **视觉内非交互区域点击即收起**：改造 `docClickHandler`（document capture 阶段），新增「视觉内但不在交互白名单内 → 收起」分支。白名单＝**触发器 + 5 个预设按钮 + 开始/结束日期输入框**（含其内部节点如日历图标），其余一切区域（标头文字、面板内边距空白、日期行分隔箭头、视觉容器边缘空白）均视为空白、点击即收起，采用最严格判定。
+  * **失焦回收（覆盖 iframe 之外的点击）**：新增 `window` 的 `blur` 监听。**根因**是自定义视觉运行在 PBI 的 sandboxed iframe 内，点击画布其他视觉对象或空白处时事件不跨 iframe，iframe 内的 `document` 完全收不到 click——单靠 `document` 监听无解，必须走 iframe 级别的 `window blur`。这是「记以前做过」的那套失焦回收，此前版本中已丢失，本次补回。
+* **保护系统日历选日期（明确要求：日历逻辑不改）**：失焦判定 `evaluateBlurClose()` 做两级豁免 —— ① `document.hasFocus()` 为 true（iframe 仍持有焦点，说明用户仍在本视觉内操作）不收起；② 焦点已离开但 `document.activeElement` 是开始/结束日期输入框（系统日历正处于打开/选日期状态）不收起。blur 事件后**延后一个宏任务（setTimeout 0ms）**再判定，因为 blur 触发瞬间 `activeElement` 尚未稳定。
+* **⚠️ 规避开关死循环（关键回归风险）**：`docClickHandler` 注册在 **capture** 阶段，早于 `triggerEl` 自身 **bubble** 阶段的 click handler。因此**触发器必须在白名单内**——否则点已展开的触发器会先被判定为空白而 `closePanel()`，随后 trigger 的 handler 再 `togglePanel()` 把它打开，形成「点触发器关不掉」的死循环。
+* **监听生命周期**：`window blur` 在 `openPanel()` 注册、`closePanel()` 解绑，面板关闭时零常驻开销；`destroy()` 兜底解绑并 `clearTimeout` 挂起的失焦延时器，防止视觉销毁后回调仍执行。
+* 原有行为全部保持：点预设后收起、再点触发器收起、Esc 收起、日期输入框 `change` 与「命中预设即回预设态」逻辑均未改动。GUID 不变（`DateRangeSlicer20260825004`），兼容热加载升级。
+* **建议验证清单**：① 展开后点视觉内标头 → 应收起；② 展开后点面板内 padding 空白 → 应收起；③ 展开后点报表画布其他视觉/空白处 → 应收起；④ 再点触发器 → 应能正常收起（重点，防死循环）；⑤ 点日期输入框弹系统日历并选日期 → 面板**不应**消失，选完仍展开；⑥ Esc → 应收起。
+
+## 2.4.2.0
+* **浮层面板改为「右对齐触发器」**：此前面板是 `left:0; right:0`（与触发器同宽），触发器在报表里被调窄后面板跟着变窄，内部两个日期输入框被挤压、内容溢出截断。现改为 `right:0; left:auto` + `width:max-content; min-width:100%; max-width:420px`——**右边缘始终贴齐触发器，需要更宽时向左扩展**，触发器再短面板也能保持完整宽度。
+  * 配套给内容定最小宽度：预设网格 `grid-template-columns: repeat(2, minmax(92px, 1fr))`、日期行 `min-width:212px`、日期输入 `min-width:96px`（原 `min-width:0` 会被压扁），让 `max-content` 撑出合理的面板宽度。
+  * 极矮兜底模式（`.drs-panel-inline`）复位 `width:auto; min-width:0; max-width:none`，避免流内展开时宽度约束撑坏布局。
+* **预设 ↔ 日期输入框 ↔ 触发器 三者联动**（核心语义修正：**预设的本质就是给两个日期输入框赋一组值**）：
+  * **选预设＝给输入框赋值**：`applyPresetFilter` 不再把输入框置空（`syncDateInputs(null,null)`），改为回填该预设算出的 `[start, end]`。输入框从此**始终有值，不再出现原生 `yyyy/m/日` 占位符**。
+  * **手改日期命中预设即回到预设态**：`onCustomDateChange` 先用新的 `exactMatchPreset(start,end)` 做**天级精确比对**，命中则直接 `selectPreset(matched)`（预设高亮 + 触发器显示预设名 + 清空自定义态 + 收起面板），不再当作自定义区间处理。
+  * **切页恢复走同一套判定**：`update()` 的筛选恢复分支改为先 `reverseCustomRange` 反推真实起止，再 `exactMatchPreset` 精确匹配；命中→预设态，未命中→自定义态（`currentPreset=""`，不高亮任何预设）。
+  * **新增 `ensureInputsFilled()` 兜底**：优先级「已有值不动 → 自定义区间 → 当前预设区间 → 数据边界」，在切页恢复与每次 `update` 末尾调用，确保任何状态下输入框都有值。
+* **删除 `matchPreset()`（模糊匹配）**：该函数按「起止误差合计 ≤3 天即命中」判定，会造成「用户选了 8/1–8/25 却高亮『近30天』」这类误判，与用户的预期语义（刚好等于才算预设）冲突。连同 `syncDateInputs(null,null)` 的空值分支一并移除，净减约 55 行。切页恢复改由 `reverseCustomRange` + `exactMatchPreset` 承担。
+* 使用提示：GUID 不变（`DateRangeSlicer20260825004`），兼容热加载升级；若 PBI Desktop 看不到新行为，删除画布上的旧视觉实例后重新导入。
+
+## 2.4.1.0
+* **面板改回「浮层下拉」，恢复真正的下拉观感**：此前（2.3.6.1 起）面板是**流内展开**，会把视觉内布局向下推挤，且无限高无滚动、视觉框矮时内容被 iframe `overflow:hidden` 裁掉。本次改为绝对定位浮层，浮在触发器正下方并**盖住下方内容**，不推挤布局：
+  * **新增 `.drs-body` 定位容器**（包裹触发器 + 面板，面板 `position:absolute` 相对它定位）。顺带修复「标头位置=左侧」的布局错乱——此前 header/trigger/panel 同为 root 的 flex 子元素，left 模式下 `flex-direction:row` 会把展开的面板横排到触发器右侧。
+  * **下拉观感强化**：面板加 `box-shadow: 0 8px 24px rgba(0,0,0,.45)` 浮起阴影；展开播放 140ms 位移动画（向下 `translateY(-6px)→0`，向上翻转时方向相反）；箭头 ▾ 改为 CSS `rotate(180deg)` 过渡（不再切换 textContent），展开/收起更顺滑。
+  * **自动翻转 + 限高滚动**：`positionPanel()` 用 `getBoundingClientRect()` 实测触发器与视觉框的上下可用空间，默认向下展开，下方放不下自然高度且上方更宽裕时自动加 `.drs-panel-up` 向上翻转；`max-height` 始终限制在视觉可视区内并 `overflow-y:auto` 内部滚动，**避免浮出视觉框被 iframe 裁切**（兜底 60px）。
+  * **极矮视觉兜底**：上下可用空间都 < 100px 时，加 `.drs-panel-inline` + root `overflow-y:auto` 退化回视觉内流内展开并允许滚动，牺牲浮层观感换取内容可见。
+  * 显隐改用 class `.drs-panel-open` 控制（原内联 `style.display` 会盖过 CSS 的 `display:flex` 与 animation，导致 `gap` 和展开动画失效）。
+* **修复 `persistCustomRange` 写错对象名**：`currentPreset` 属于 `state` 对象，此前被误写在 `customRange` 对象下（capabilities 未声明该属性）而被丢弃，导致自定义区间态下「清空预设名」不生效、重开报表仍恢复旧预设名。现拆成两条 merge 分别写 `state.currentPreset=""` 与 `customRange.{customStart,customEnd}`。
+* **修复 `update` 自激隐患**：`matchPreset` 命中后每次 update 都会调 `persistCurrentPreset` → `persistProperties` 触发新一轮 update 的循环。新增 `lastPersistedPreset` 守卫，值未变化则跳过写入（`readSettings` 读到已持久化值时同步该守卫）。
+* 使用提示：浮层方案下建议把视觉元素拉高到 **≥ 触发器 30px + 面板约 200px ≈ 240px**，否则会触发限高滚动或极矮兜底。GUID 不变（`DateRangeSlicer20260825004`），兼容热加载升级。
+
 ## 2.3.6.2
 * **修复弹层位置不对（流内展开在 flex 容器里排到触发器旁边）**：改回 `position:absolute` 浮在触发器正下方（真正下拉位置），保留下方空间不足自动翻向上的逻辑，root 去掉 `overflow:auto` 避免干扰浮层。注意：弹层浮出视觉框，若切片器视觉高度不足仍会被 iframe `overflow:hidden` 裁切——**需把视觉元素在报表里拉高（建议 ≥ 触发器 30px + 弹层约 210px ≈ 250px）**，列表即完整显示在触发器正下方。GUID 不变，兼容热加载升级。
 

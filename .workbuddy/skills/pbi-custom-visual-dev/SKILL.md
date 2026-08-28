@@ -232,6 +232,75 @@ PBI Desktop 用 **GUID 作为视觉对象插件的唯一标识**。同名（同 
 
 代价：同名但不同 GUID 的视觉对象会在 PBI 视觉对象面板里并存（两份 "日期区间切片器"）。需要的话在 `pbiviz.json` 的 `displayName` 上加版本后缀给视觉对象辨认：`"displayName": "日期区间切片器 v1.2"`。
 
+## 八点五、浮层下拉定位（v2.4.1：恢复「下拉观感」）
+
+- **需求**：面板要"下拉感"＝浮在触发器下方**盖住下方内容**，不能推挤布局（流内展开只是占位，没有下拉观感）。
+- **DOM 结构**：`root → header + body(.drs-body) → trigger + panel`，panel 绝对定位相对 `.drs-body`。
+  **必须包 `.drs-body` 这层**——否则「标头位置=左侧」（root `flex-direction:row`）时，panel 作为 root 的第三个 flex 子元素会**横排到触发器右侧**。
+- **定位计算 `positionPanel()`**：`getBoundingClientRect()` 取 root 与 trigger 的上下可用空间 → 默认向下展开；`下方可用 < 面板自然高度 && 上方更宽裕` 时加 `.drs-panel-up` 向上翻转；`max-height = 可用空间`（兜底 60px）+ `overflow-y:auto`，防止浮出视觉框被 iframe `overflow:hidden` 裁切。上下都 < 100px 时退化为 `.drs-panel-inline` 流内展开 + root `overflow-y:auto`，牺牲浮层观感换内容可见。
+- **⚠️ 坑：内联 `style.display` 会盖过 CSS**：用 `el.style.display="block"` 控制显隐，会让 CSS 里的 `display:flex`（`gap` 才生效）和展开 `animation` 全部失效。**解法**：改用 class `.drs-panel-open { display:flex; animation:... }`，JS 只 add/remove class；构造函数里也**不要**留 `style.display="none"` 初始值（内联优先级高于 class）。
+- **量自然高度的顺序**：先 `classList.add(open)` → 清 `maxHeight` → 读 `scrollHeight` → 再设 `maxHeight`。顺序反了量到的是被上一轮限高的值。
+- **下拉观感三件套**：`box-shadow: 0 8px 24px rgba(0,0,0,.45)`（浮起感）+ 140ms `translateY` 位移动画（display none→flex 时 CSS animation 会自动重播）+ 箭头 CSS `rotate(180deg)` 过渡（比切换 `textContent` ▾/▴ 顺滑）。
+- **⚠️ 坑：`persistProperties` 写错 objectName 会被静默丢弃**：`currentPreset` 属于 `state` 对象，若混写进 `customRange` 的 properties（capabilities 未声明该属性）**不报错但不生效**。一个对象一条 merge，不要混写。
+- **⚠️ 坑：`update → persist → update` 自激**：`update()` 的筛选恢复分支里命中就 `persistProperties`，会触发新一轮 update 形成循环。**解法**：加 `lastPersistedPreset` 守卫，值未变化则跳过写入；`readSettings` 读到已持久化值时同步该守卫。
+- **构建命令的中文路径坑**：PowerShell 里 `cd "C:\...\营收概况\..."` 中文会被按 GBK 解析成乱码、报路径不存在。**解法**：shell 默认已在项目根，改用相对路径 `cd visual\DateRangeSlicer`。
+- **验证产物更稳的做法**：解包后对 `resources/*.pbiviz.json`（CSS+JS 都内嵌在这里）做关键词 `Contains` 匹配即可；`ConvertFrom-Json` 在中文内容上容易因编码失败，直接字符串匹配更可靠。
+
+## 八点六、浮层对齐方式与「预设＝日期输入框取值」语义（v2.4.2）
+
+### 浮层右对齐触发器
+- **需求**：触发器在报表里被调窄后，面板跟着变窄 → 内部日期输入框被挤压、内容溢出截断。
+- **解法**：面板 `right:0; left:auto` + `width:max-content; min-width:100%; max-width:420px`。右边缘**贴齐触发器**，需要更宽时向**左**扩展，触发器再短面板也保持完整宽度。
+- **配套**：`max-content` 靠内容撑宽，所以要给内容定最小宽度 —— 预设网格 `repeat(2, minmax(92px,1fr))`、日期行 `min-width:212px`、日期输入 `min-width:96px`（原本 `min-width:0` 会被 flex 压扁）。
+- **⚠️ 坑**：极矮兜底模式（`.drs-panel-inline` 流内展开）必须复位 `width:auto; min-width:0; max-width:none`，否则流内时 `min-width:100%` + `max-content` 会撑坏布局。
+
+### 预设 / 日期输入框 / 触发器 三者联动（核心语义）
+- **语义**：**预设的本质就是给两个日期输入框赋一组值**。据此推导出的三条联动规则（用户明确确认过）：
+  1. 选预设 → 把该预设的 `[start,end]` **回填进两个输入框**（不能置空）
+  2. 手改输入框 → 若结果**恰好等于**某预设，自动回到**预设态**（预设高亮 + 触发器显示预设名 + 清空自定义态）；否则才是自定义态
+  3. 触发器文本：预设态显示预设名，自定义态显示格式化的日期区间
+- **⚠️ 坑：输入框置空会露出原生 `yyyy/m/日` 占位符**。解法是输入框**始终有值** —— `ensureInputsFilled()` 兜底，优先级：已有值不动 → 自定义区间 → 当前预设区间 → 数据边界（全量态）。在切页恢复分支和 `update()` 末尾各调一次。
+- **⚠️ 坑：模糊匹配会误判预设**。原 `matchPreset()` 按「起止误差合计 ≤3 天即命中」判定，导致「用户选 8/1–8/25 却高亮『近30天』」。**已删除**，改为 `exactMatchPreset(start,end)` 做**天级精确比对**（两端时间戳完全相等）。切页恢复改由 `reverseCustomRange()` 反推真实起止 + `exactMatchPreset()` 判定，命中→预设态，未命中→`currentPreset=""`（自定义态，不高亮任何预设）。
+- **校验产物时注意大小写**：PowerShell `-match` 默认不区分大小写，检查 `matchPreset` 是否删干净会误命中 `exactMatchPreset` 里的 `MatchPreset`。用 `-cmatch` 或匹配特征串（如 `matchPreset\(filter`）。
+
+## 八点七、浮层下拉面板的回收机制（v2.4.3）
+
+### 根因：iframe 隔离导致 document click 收不到
+- **症状**：面板展开后，点报表画布其他视觉对象/空白处收不起来，只有点选项才收起。
+- **根因**：自定义视觉跑在 PBI 的 **sandboxed iframe** 内，点击 iframe 之外的地方，**事件不跨 iframe**，iframe 内的 `document` 完全收不到 click。所以「点外部关闭」靠 `document` 监听是无解的。
+- **唯一可行通道**：监听 **iframe 级别的 `window blur`**。点到画布别处 → 本 iframe 失焦 → `window` 收到 blur。
+- 这与 v1.1–v1.4 自绘弹层的坑同源（挂 `document.body` 的弹层飞不出 iframe、document click 关不掉），但 v1.x 时的结论是「无解」，实际上 window blur 这条路当时没试，属于漏掉的解法。
+
+### 三条关闭通道 + 一个白名单
+1. `document` click（**capture** 阶段）：视觉外直接收起；视觉内则查白名单，非白名单即收起。
+2. `window` blur：覆盖 iframe 之外的所有点击。
+3. Esc：保留。
+- **白名单＝触发器 + 预设按钮 + 两个日期输入框**（含内部节点如日历图标）。用**白名单**而不是「是否在面板内」的黑名单，才能满足「除交互元素外一律收起」的最严格判定——面板 padding 空白、分隔箭头、标头文字都不豁免。
+
+### ⚠️ 关键坑：capture 阶段白名单必须包含触发器，否则关不掉
+`docClickHandler` 注册在 **capture** 阶段，早于 `triggerEl` 自身 **bubble** 阶段的 handler。
+若触发器不在白名单，点已展开的触发器会：capture 判定为空白 → `closePanel()` → 随后 trigger handler `togglePanel()` 又打开，形成**「点触发器关不掉」的开关死循环**。
+> 诊断口诀：下拉「点了没反应/关不掉」，先查 capture/bubble 顺序与白名单，别急着改业务逻辑。
+
+### 保护系统日历：失焦判定的两级豁免
+用户明确要求「日历逻辑不改」——弹出系统日历选日期时面板不能被收起。做法：
+```ts
+private evaluateBlurClose(): void {
+    this.blurTimer = null;
+    if (!this.isPanelOpen) { return; }
+    if (document.hasFocus && document.hasFocus()) { return; }   // ① iframe 仍持有焦点
+    const active = document.activeElement;
+    if (active === this.startInput || active === this.endInput) { return; } // ② 焦点在日期输入框
+    this.closePanel();
+}
+```
+- **⚠️ 坑：blur 瞬间 `document.activeElement` 尚未稳定**，必须 `setTimeout(..., 0)` 延后一个宏任务再判定，否则 ② 判定不准。
+- ① 用 `hasFocus()` 区分「整个 iframe 失焦（真离开）」与「iframe 内焦点移动 / 原生 picker 打开」。
+
+### 监听生命周期
+- `window blur` 在 `openPanel()` 注册、`closePanel()` 解绑，关闭时零常驻开销。
+- `destroy()` 必须**兜底**解绑并 `clearTimeout(blurTimer)` —— 面板展开态下视觉被销毁时，否则残留监听 + 待执行的延时器回调会打到已销毁的对象上。
+
 ### 验证产物是否真的包含新代码
 光看文件大小/时间戳不可靠。**权威办法**：解包 .pbiviz 看内嵌 manifest：
 ```powershell

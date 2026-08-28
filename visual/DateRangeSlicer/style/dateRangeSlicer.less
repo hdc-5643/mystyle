@@ -30,6 +30,17 @@
     gap: 6px;
 }
 
+/* 触发器 + 浮层面板的定位容器：面板 absolute 相对它定位，
+   保证「标头位置=左侧」时面板仍落在触发器正下方而不是排到右侧 */
+.drs-body {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
 .drs-header {
     display: flex;
     flex: 0 0 auto;
@@ -46,7 +57,8 @@
 
 /* ---------- 自绘下拉触发器（div） ---------- */
 .drs-trigger {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
+    width: 100%;
     min-width: 0;
     display: flex;
     align-items: center;
@@ -85,24 +97,72 @@
     font-size: 10px;
     line-height: 1;
     color: var(--drs-fg);
+    transition: transform .15s ease;
+}
+.drs-trigger.active .drs-trigger-arrow {
+    transform: rotate(180deg);
 }
 
-/* ---------- 第二层展开面板（视觉内占据区域，非浮层） ---------- */
+/* ---------- 第二层：浮层下拉面板（absolute 相对 .drs-body，盖住下方内容） ---------- */
 .drs-panel {
-    flex: 1 1 auto;
+    display: none;
+    position: absolute;
+    /* 右对齐触发器：右边缘贴齐，需要更宽时向左扩展。
+       避免触发器被调短后面板跟着变窄、内部日期输入框被挤压溢出 */
+    right: 0;
+    left: auto;
+    top: calc(100% + 4px);
+    z-index: 1000;
     box-sizing: border-box;
-    margin-top: 6px;
+    width: max-content;
+    min-width: 100%;
+    max-width: 420px;
     padding: 10px;
     background: var(--drs-list-bg, #0A1428);
     border: 1px solid var(--drs-border);
     border-radius: var(--drs-radius);
-    display: flex;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
+    overflow-x: hidden;
+    overflow-y: auto;
     flex-direction: column;
     gap: 10px;
 }
+.drs-panel.drs-panel-open {
+    display: flex;
+    animation: drs-pop-down .14s ease-out;
+}
+/* 下方空间不足：向上翻转展开 */
+.drs-panel.drs-panel-open.drs-panel-up {
+    top: auto;
+    bottom: calc(100% + 4px);
+    animation-name: drs-pop-up;
+}
+/* 视觉框极矮（上下都放不下）：退化为视觉内流内展开，保证内容可见 */
+.drs-panel.drs-panel-open.drs-panel-inline {
+    position: static;
+    /* 流内展开时复位宽度约束，避免 min-width:100% + max-content 撑坏布局 */
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    margin-top: 6px;
+    box-shadow: none;
+    animation: none;
+}
+.drs-inline-mode {
+    overflow-y: auto;
+}
+@keyframes drs-pop-down {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes drs-pop-up {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 .drs-preset-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    /* 92px 最小列宽：让 max-content 撑出合理面板宽度，预设文字不被压成两行 */
+    grid-template-columns: repeat(2, minmax(92px, 1fr));
     gap: 8px;
 }
 .drs-preset {
@@ -139,10 +199,12 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    /* 两个日期输入 + 分隔箭头的最小宽度，撑住面板不要被压扁 */
+    min-width: 212px;
 }
 .drs-date-input {
     flex: 1 1 0;
-    min-width: 0;
+    min-width: 96px;
     height: 30px;
     box-sizing: border-box;
     padding: 0 8px;
