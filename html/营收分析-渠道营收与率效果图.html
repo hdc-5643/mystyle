@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>营收分析 · 渠道营收与收益率（柱状散点效果图）</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif;
+      background: #0A1428;
+      color: #FFFFFF;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 32px;
+    }
+    .canvas { width: 480px; margin: 0 auto; }
+    .card {
+      background: #142436;
+      border: 0.5px solid #2C4A6B;
+      border-radius: 8px;
+      padding: 18px 20px;
+    }
+    .card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title { font-size: 14px; font-weight: 500; color: #FFFFFF; }
+    .action {
+      height: 22px; padding: 0 14px; border-radius: 4px;
+      background: #0F1B30; border: 0.5px solid #378ADD; color: #378ADD;
+      font-size: 11px; line-height: 21px; font-weight: 500;
+      cursor: pointer; transition: all .15s;
+    }
+    .action:hover { background: #378ADD; color: #FFFFFF; }
+
+    /* ============ 双轴图例 ============ */
+    .axis-legend {
+      display: flex; gap: 18px;
+      font-size: 10px; color: #B4B2A9;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    .legend-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 2px; margin-right: 5px;
+      vertical-align: middle;
+    }
+    .legend-circle {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; margin-right: 5px;
+      vertical-align: middle;
+    }
+    .legend-bar { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; background: #378ADD; }
+
+    /* ============ 主图 SVG ============ */
+    .chart-wrap {
+      background: #0F1B30;
+      border-radius: 6px;
+      padding: 12px 8px 8px 8px;
+    }
+    .chart-svg { display: block; width: 100%; height: 240px; }
+
+    /* ============ 渠道标签 ============ */
+    .x-labels {
+      display: flex; justify-content: space-around;
+      padding: 8px 8px 0 8px;
+      font-size: 10px; color: #B4B2A9;
+    }
+    .x-labels > div { text-align: center; flex: 1; }
+    .x-labels strong { display: block; font-size: 11px; font-weight: 500; color: #FFFFFF; margin-bottom: 2px; }
+    .x-labels span { font-size: 9px; color: #5F5E5A; }
+
+    /* ============ 提示条 ============ */
+    .hint {
+      background: #1A2D44;
+      border-left: 2px solid #7F77DD;
+      padding: 8px 10px;
+      border-radius: 0 4px 4px 0;
+      margin: 14px 0 10px 0;
+      font-size: 10px; color: #B4B2A9;
+      line-height: 1.6;
+    }
+    .hint strong { color: #AFA9EC; font-weight: 500; }
+
+    .footnote {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 0.5px solid #1E3A5F;
+      font-size: 10px; color: #5F5E5A;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">渠道营收与收益率</div>
+        <div class="action" onclick="goDetail()">详情 →</div>
+      </div>
+
+      <!-- 图例 -->
+      <div class="axis-legend">
+        <span><i class="legend-bar"></i>营收金额（左轴·万）</span>
+        <span><i class="legend-circle" style="background:#EF9F27"></i>服务费率</span>
+        <span><i class="legend-circle" style="background:#378ADD"></i>佣金率</span>
+        <span><i class="legend-circle" style="background:#5DCAA5"></i>毛利率</span>
+      </div>
+
+      <!-- 主图 SVG -->
+      <div class="chart-wrap">
+        <svg class="chart-svg" viewBox="0 0 420 240" xmlns="http://www.w3.org/2000/svg">
+          <!-- 网格 -->
+          <line x1="42" y1="20"  x2="410" y2="20"  stroke="#1E3A5F" stroke-width="0.5"/>
+          <line x1="42" y1="60"  x2="410" y2="60"  stroke="#1E3A5F" stroke-width="0.5"/>
+          <line x1="42" y1="100" x2="410" y2="100" stroke="#1E3A5F" stroke-width="0.5"/>
+          <line x1="42" y1="140" x2="410" y2="140" stroke="#1E3A5F" stroke-width="0.5"/>
+          <line x1="42" y1="180" x2="410" y2="180" stroke="#1E3A5F" stroke-width="0.5"/>
+          <line x1="42" y1="200" x2="410" y2="200" stroke="#2C4A6B" stroke-width="1"/>
+
+          <!-- 左 Y 轴：营收金额（万） 0~70 -->
+          <text x="36" y="24"  text-anchor="end" font-size="9" fill="#5F5E5A">70</text>
+          <text x="36" y="64"  text-anchor="end" font-size="9" fill="#5F5E5A">56</text>
+          <text x="36" y="104" text-anchor="end" font-size="9" fill="#5F5E5A">42</text>
+          <text x="36" y="144" text-anchor="end" font-size="9" fill="#5F5E5A">28</text>
+          <text x="36" y="184" text-anchor="end" font-size="9" fill="#5F5E5A">14</text>
+          <text x="36" y="204" text-anchor="end" font-size="9" fill="#5F5E5A">0</text>
+          <text x="14" y="110" font-size="9" fill="#378ADD" transform="rotate(-90,14,110)">营收(万)</text>
+
+          <!-- 右 Y 轴：率（%）0~40% -->
+          <text x="414" y="24"  font-size="9" fill="#5F5E5A">40%</text>
+          <text x="414" y="64"  font-size="9" fill="#5F5E5A">32%</text>
+          <text x="414" y="104" font-size="9" fill="#5F5E5A">24%</text>
+          <text x="414" y="144" font-size="9" fill="#5F5E5A">16%</text>
+          <text x="414" y="184" font-size="9" fill="#5F5E5A">8%</text>
+          <text x="414" y="204" font-size="9" fill="#5F5E5A">0%</text>
+          <text x="418" y="110" font-size="9" fill="#7F77DD" transform="rotate(90,418,110)">率(%)</text>
+
+          <!-- ============ 柱子（4 根）============ -->
+          <!-- X 中心：85, 175, 265, 355；柱宽 50 -->
+
+          <!-- 星图：营收 61万 → 高度 = 61/70*180 = 157 顶部 y=43 -->
+          <rect x="60" y="43" width="50" height="157" rx="2" fill="#378ADD" opacity="0.85"/>
+          <text x="85" y="38" text-anchor="middle" font-size="10" font-weight="500" fill="#FFFFFF">61.0</text>
+
+          <!-- MCN：营收 25.7万 → 高度 = 25.7/70*180 = 66 顶部 y=134 -->
+          <rect x="150" y="134" width="50" height="66" rx="2" fill="#378ADD" opacity="0.85"/>
+          <text x="175" y="129" text-anchor="middle" font-size="10" font-weight="500" fill="#FFFFFF">25.7</text>
+
+          <!-- 猿推库：营收 8.3万 → 高度 = 8.3/70*180 = 21 顶部 y=179 -->
+          <rect x="240" y="179" width="50" height="21" rx="2" fill="#378ADD" opacity="0.85"/>
+          <text x="265" y="174" text-anchor="middle" font-size="10" font-weight="500" fill="#FFFFFF">8.3</text>
+
+          <!-- 智趣：营收 4.5万 → 高度 = 4.5/70*180 = 12 顶部 y=188 -->
+          <rect x="330" y="188" width="50" height="12" rx="2" fill="#378ADD" opacity="0.85"/>
+          <text x="355" y="183" text-anchor="middle" font-size="10" font-weight="500" fill="#FFFFFF">4.5</text>
+
+          <!-- ============ 散点（4 个，按性质颜色，不连线）============ -->
+          <!-- 右轴 0~40% 映射到 y 200~20，每 1% = 4.5px -->
+
+          <!-- 星图毛利率 38.2% → y = 200 - 38.2*4.5 = 200 - 171.9 = 28.1 -->
+          <circle cx="85" cy="28" r="5" fill="#5DCAA5" stroke="#0F1B30" stroke-width="1.5"/>
+          <text x="85" y="14" text-anchor="middle" font-size="10" font-weight="500" fill="#5DCAA5">38.2%</text>
+
+          <!-- 智趣服务费率 32.5% → y = 200 - 32.5*4.5 = 200 - 146.25 = 53.75 -->
+          <circle cx="355" cy="54" r="5" fill="#EF9F27" stroke="#0F1B30" stroke-width="1.5"/>
+          <text x="355" y="44" text-anchor="middle" font-size="10" font-weight="500" fill="#EF9F27">32.5%</text>
+
+          <!-- MCN佣金率 24.1% → y = 200 - 24.1*4.5 = 200 - 108.45 = 91.55 -->
+          <circle cx="175" cy="92" r="5" fill="#378ADD" stroke="#0F1B30" stroke-width="1.5"/>
+          <text x="175" y="82" text-anchor="middle" font-size="10" font-weight="500" fill="#378ADD">24.1%</text>
+
+          <!-- 猿推库服务费率 14.0% → y = 200 - 14*4.5 = 200 - 63 = 137 -->
+          <circle cx="265" cy="137" r="5" fill="#EF9F27" stroke="#0F1B30" stroke-width="1.5"/>
+          <text x="265" y="127" text-anchor="middle" font-size="10" font-weight="500" fill="#EF9F27">14.0%</text>
+        </svg>
+      </div>
+
+      <!-- X 轴标签 -->
+      <div class="x-labels">
+        <div><strong>星图</strong><span>毛利率</span></div>
+        <div><strong>MCN</strong><span>佣金率</span></div>
+        <div><strong>猿推库</strong><span>服务费率</span></div>
+        <div><strong>智趣</strong><span>服务费率</span></div>
+      </div>
+
+      <!-- 口径提示 -->
+      <div class="hint">
+        <strong>口径提示：</strong>散点为<strong>异构率</strong>（服务费率/佣金率/毛利率定义不同），按性质着色，<strong>不连线、不可跨点比较趋势</strong>。柱高为统一口径的营收金额，可比。
+      </div>
+
+      <div class="footnote">
+        注：左轴 = 营收金额（万元），右轴 = 率（%）；pp = 百分点。<br>
+        渠道按营收降序排列，便于"规模 + 率"同图对照。
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function goDetail() {
+      var msg = { type: 'navigate', page: 'channel-rate-combo', tab: 'all' };
+      try { window.top.postMessage(msg, '*'); }
+      catch (e) {
+        alert('跳转消息已发出（本地预览）：\n' + JSON.stringify(msg, null, 2));
+      }
+    }
+  </script>
+</body>
+</html>

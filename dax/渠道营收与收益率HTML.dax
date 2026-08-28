@@ -1,0 +1,64 @@
+渠道营收与收益率HTML = 
+VAR vals = {
+    ("星图",   DIVIDE([星图-对客成本], 10000),       [星图-毛利率],     "#5DCAA5"),
+    ("MCN",    DIVIDE([MCN-结算机构佣金], 10000),    [MCN-佣金率],     "#378ADD"),
+    ("猿推库", DIVIDE([猿推库-实际服务费收入], 10000),[猿推库-服务费率], "#EF9F27"),
+    ("智趣",   DIVIDE([智趣-实际服务费收入], 10000),  [智趣-服务费率],  "#EF9F27")
+}
+
+VAR maxRev = MAXX(vals, [Value2])
+
+// 视觉对象 492 宽 × 249 高，横版
+// 4 个渠道横向并排，顶部放率值，柱体保留营收值
+VAR bw = 20          // 柱宽
+VAR svgH = 222
+VAR rateBandH = 44   // 顶部 20% 左右给率值
+VAR plotTop = 52     // 柱图区起点
+VAR baseY = 176      // 柱子基线（留底部空间放渠道名）
+VAR plotH = baseY - plotTop   // 124
+
+// 4 个柱子中心 x：每列 123 宽，中心偏移 61.5
+VAR x1 = 62
+VAR x2 = 185
+VAR x3 = 308
+VAR x4 = 431
+
+VAR bars = 
+    CONCATENATEX(
+        ADDCOLUMNS(
+            vals,
+            "x",  SWITCH([Value1], "星图", x1, "MCN", x2, "猿推库", x3, "智趣", x4),
+            "hBar", MAX(2, DIVIDE([Value2], maxRev, 0) * plotH),
+            "yBar", baseY - MAX(2, DIVIDE([Value2], maxRev, 0) * plotH),
+            // 率值放顶部独立区域
+            "yRate", 18,
+            "fRev", FORMAT([Value2], "0.0"),
+            "fRate", FORMAT([Value3], "0.0%")
+        ),
+        // 顶部率值，单独放在 rateBand 内
+        "<circle cx='" & [x] & "' cy='" & ([yRate] + 5) & "' r='3.25' fill='" & [Value4] & "'/>"
+        & "<text x='" & [x] & "' y='" & [yRate] & "' text-anchor='middle' font-size='10' font-weight='600' fill='" & [Value4] & "'>" & [fRate] & "</text>"
+        // 柱子（Power BI 常见的蓝色主色）
+        & "<rect x='" & ([x] - bw/2) & "' y='" & [yBar] & "' width='" & bw & "' height='" & [hBar] & "' rx='1.5' fill='#378ADD'/>"
+        // 营收值（放在柱子上方，但只落在柱图区，不进率值区）
+        & "<text x='" & [x] & "' y='" & MAX(rateBandH + 16, [yBar] - 6) & "' text-anchor='middle' font-size='11' font-weight='600' fill='#EAF2FF'>" & [fRev] & "</text>"
+        // 渠道名（底部，弱化显示）
+        & "<text x='" & [x] & "' y='" & (baseY + 18) & "' text-anchor='middle' font-size='11' fill='#B4C3D7'>" & [Value1] & "</text>",
+        ""
+    )
+
+// 极简基线
+VAR grid = 
+    "<line x1='24' y1='" & rateBandH & "' x2='468' y2='" & rateBandH & "' stroke='#27425F' stroke-width='1' stroke-dasharray='4 3'/>"
+    & "<line x1='24' y1='" & baseY & "' x2='468' y2='" & baseY & "' stroke='#2C4A6B' stroke-width='1'/>"
+
+VAR svg = 
+    "<svg viewBox='0 0 492 " & svgH & "' xmlns='http://www.w3.org/2000/svg' style='display:block;width:100%;height:100%;overflow:hidden;' preserveAspectRatio='xMidYMid meet'>"
+    & grid
+    & bars
+    & "</svg>"
+
+RETURN
+"<div style='width:100%;height:100%;font-family:Segoe UI,Segoe UI Semibold,sans-serif;padding:0;margin:0;box-sizing:border-box;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#142436;line-height:0;'>"
+& svg
+& "</div>"

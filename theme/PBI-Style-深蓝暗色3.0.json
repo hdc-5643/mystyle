@@ -1,15 +1,16 @@
 {
   "name": "PBI-Style-深蓝暗色-优化",
-  "dataColors": [
-    "#378ADD",
-    "#7F77DD",
-    "#AFA9EC",
-    "#5DCAA5",
-    "#F0997B",
-    "#888780",
-    "#B4B2A9",
-    "#5F5E5A"
-  ],
+"dataColors": [
+  "#378ADD",
+  "#76CD8C",
+  "#4FA89E",
+  "#5E92C4",
+  "#D9B24C",
+  "#D97A52",
+  "#8A7DD0",
+  "#C76B9B"
+]
+,
   "visualStyles": {
     "*": {
       "*": {
@@ -159,127 +160,37 @@
     "shape": {
       "*": {
         "fill": [
-          { "show": true },
+          {
+            "show": true
+          },
           {
             "$id": "default",
             "transparency": 0,
-            "fillColor": { "solid": { "color": "#0F1B30" } }
+            "fillColor": {
+              "solid": {
+                "color": "#0F1B30"
+              }
+            }
           }
         ],
         "outline": [
-          { "show": true },
+          {
+            "show": true
+          },
           {
             "$id": "default",
             "show": false,
-            "lineColor": { "solid": { "color": "#1E3A5F" } }
+            "lineColor": {
+              "solid": {
+                "color": "#1E3A5F"
+              }
+            }
           }
         ],
         "border": [
           {
             "show": false,
-            "radius": 6
-          }
-        ]
-      }
-    },
-    "slicer": {
-      "*": {
-        "*": [
-          {
-            "fontFamily": "Segoe UI"
-          }
-        ],
-        "header": [
-          {
-            "show": true,
-            "fontColor": {
-              "solid": {
-                "color": "#FFFFFF"
-              }
-            },
-            "fontSize": 12,
-            "fontFamily": "Segoe UI"
-          }
-        ]
-      }
-    },
-    "advancedSlicerVisual": {
-      "*": {
-        "*": [
-          {
-            "fontFamily": "Segoe UI"
-          }
-        ],
-        "header": [
-          {
-            "show": true,
-            "fontColor": {
-              "solid": {
-                "color": "#FFFFFF"
-              }
-            },
-            "fontSize": 12,
-            "fontFamily": "Segoe UI"
-          }
-        ]
-      }
-    },
-    "textSlicer": {
-      "*": {
-        "*": [
-          {
-            "fontFamily": "Segoe UI"
-          }
-        ],
-        "header": [
-          {
-            "show": true,
-            "fontColor": {
-              "solid": {
-                "color": "#FFFFFF"
-              }
-            },
-            "fontSize": 12,
-            "fontFamily": "Segoe UI"
-          }
-        ]
-      }
-    },
-    "textbox": {
-      "*": {
-        "*": [
-          {
-            "fontFamily": "Segoe UI",
-            "fontSize": 12
-          }
-        ],
-        "background": [
-          {
-            "color": {
-              "solid": {
-                "color": "#00000000"
-              }
-            },
-            "transparency": 100
-          }
-        ],
-        "border": [
-          {
-            "show": false
-          }
-        ],
-        "title": [
-          {
-            "show": false
-          }
-        ],
-        "text": [
-          {
-            "fontColor": {
-              "solid": {
-                "color": "#FFFFFF"
-              }
-            }
+            "radius": 4
           }
         ]
       }
@@ -290,8 +201,14 @@
           {
             "fontFamily": "Segoe UI",
             "fontSize": 12,
-            "top": 5,
-            "bottom": 5,
+            "leftMargin": 16,
+            "rightMargin": 16,
+            "top":5,
+            "left":5,
+            "bottom":5,
+            "right":5,
+            "horizontalAlignment": "center",
+            "verticalAlignment": "middle",
             "showHiddenPages": false
           }
         ],
@@ -304,19 +221,14 @@
         "fill": [
           {
             "$id": "default",
-            "show": true,
-            "fillColor": {
-              "solid": {
-                "color": "#0F1B30"
-              }
-            },
-            "transparency": 0
+            "show": false,
+            "transparency": 100
           },
           {
             "$id": "hover",
             "fillColor": {
               "solid": {
-                "color": "#142436"
+                "color": "#162B40"
               }
             },
             "show": true,
@@ -326,7 +238,7 @@
             "$id": "selected",
             "fillColor": {
               "solid": {
-                "color": "#1A2D44"
+                "color": "#193653"
               }
             },
             "show": true,
@@ -346,13 +258,7 @@
         "outline": [
           {
             "$id": "default",
-            "show": true,
-            "lineColor": {
-              "solid": {
-                "color": "#1E3A5F"
-              }
-            },
-            "weight": 1
+            "show": false
           },
           {
             "$id": "hover",
@@ -366,23 +272,11 @@
           },
           {
             "$id": "selected",
-            "show": true,
-            "lineColor": {
-              "solid": {
-                "color": "#378ADD"
-              }
-            },
-            "weight": 1
+            "show": false
           },
           {
             "$id": "disabled",
-            "show": true,
-            "lineColor": {
-              "solid": {
-                "color": "#2C4A6B"
-              }
-            },
-            "weight": 1
+            "show": false
           }
         ],
         "text": [
@@ -420,12 +314,39 @@
             }
           }
         ],
-    "shape": [
-      {
-        "tileShape": "rectangleRoundedByPixel",
-        "rectangleRoundedCurve": 12
-      }
-    ]
+        "accentBar": [
+          {
+            "$id": "default",
+            "show": false
+          },
+          {
+            "$id": "hover",
+            "show": false
+          },
+          {
+            "$id": "selected",
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#378ADD"
+              }
+            },
+            "position": "Bottom",
+            "width": 3
+          },
+          {
+            "$id": "disabled",
+            "show": false
+          }
+        ],
+        "shape": [
+          {
+            "$id": "default",
+            "tileShape": "rectangleRoundedByPixel",
+            "rectangleRoundedCurve": 6,
+            "roundEdge": 6
+          }
+        ]
       }
     },
     "bookmarkNavigator": {
@@ -434,8 +355,10 @@
           {
             "fontFamily": "Segoe UI",
             "fontSize": 11,
-            "top": 5,
-            "bottom": 5
+            "top":5,
+            "left":5,
+            "bottom":5,
+            "right":5
           }
         ],
         "border": [
@@ -449,7 +372,7 @@
             "$id": "default",
             "fillColor": {
               "solid": {
-                "color": "#142436"
+                "color": "#102238"
               }
             },
             "show": true,
@@ -459,7 +382,7 @@
             "$id": "hover",
             "fillColor": {
               "solid": {
-                "color": "#1A2D44"
+                "color": "#162B40"
               }
             },
             "show": true,
@@ -469,7 +392,7 @@
             "$id": "selected",
             "fillColor": {
               "solid": {
-                "color": "#1A2D44"
+                "color": "#193653"
               }
             },
             "show": true,

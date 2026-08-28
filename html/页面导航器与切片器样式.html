@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>页面导航器与切片器样式 · 顶栏版</title>
+  <style>
+    :root {
+      --bg-page: #0A1428;
+      --bg-topbar: #081426;
+      --bg-card: #142436;
+      --bg-highlight: #1A2D44;
+      --border: #2C4A6B;
+      --line: #1E3A5F;
+      --text-main: #FFFFFF;
+      --text-sub: #B4B2A9;
+      --text-muted: #5F5E5A;
+      --primary: #378ADD;
+      --primary-hover: #2E73C0;
+      --primary-soft: rgba(55, 138, 221, 0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg-page);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      min-height: 100vh;
+      padding: 40px;
+    }
+
+    .stage {
+      width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ===== 顶栏：标题 + 页面导航器 + 切片器 ===== */
+    .topbar {
+      background: var(--bg-topbar);
+      border: 1px solid var(--border);
+      border-radius: 12px 12px 0 0;
+      border-bottom: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    /* 第一行：标题（左） + 切片器（右） */
+    .topbar-row-1 {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.5px;
+    }
+
+    .brand-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .date-slicer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-sub);
+      font-size: 13px;
+    }
+
+    .dropdown {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 32px;
+      padding: 0 14px;
+      background: var(--bg-highlight);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-main);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+
+    .dropdown:hover { border-color: var(--primary); }
+
+    .dropdown-icon {
+      width: 0; height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 4px solid var(--text-sub);
+      margin-top: 2px;
+    }
+
+    /* 第二行：页面导航器 */
+    .topbar-row-2 {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 18px;
+    }
+
+    .nav-tab {
+      height: 34px;
+      padding: 0 20px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-sub);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-tab:hover:not(.active) {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .nav-tab.active {
+      background: var(--primary);
+      color: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(55, 138, 221, 0.25);
+    }
+
+    /* ===== 内容区 + 渠道切片器 ===== */
+    .content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      padding: 24px;
+    }
+
+    .slicer-block { margin-top: 4px; }
+
+    .slicer-head {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 12px;
+    }
+
+    .slicer-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .slicer-label {
+      font-size: 13px;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+
+    .slicer-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .pill {
+      height: 32px;
+      padding: 0 16px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--bg-topbar);
+      color: var(--text-sub);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pill:hover:not(.active) {
+      border-color: var(--primary);
+      color: var(--text-main);
+      background: var(--primary-soft);
+    }
+
+    .pill.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(55, 138, 221, 0.22);
+    }
+
+    .hint { margin-top: 18px; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+    .hint b { color: var(--text-sub); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <!-- 顶栏 -->
+    <div class="topbar">
+      <!-- 第一行：标题 + 日期切片器 -->
+      <div class="topbar-row-1">
+        <div class="brand">
+          <div class="brand-title">营收概况</div>
+          <div class="brand-sub">Revenue Overview</div>
+        </div>
+        <div class="date-slicer">
+          <span>结算日期</span>
+          <div class="dropdown">
+            <span>本月</span>
+            <div class="dropdown-icon"></div>
+          </div>
+        </div>
+      </div>
+      <!-- 第二行：页面导航器 -->
+      <div class="topbar-row-2">
+        <button class="nav-tab active">结算收入</button>
+        <button class="nav-tab">支付收入</button>
+      </div>
+    </div>
+
+    <!-- 内容区 + 渠道切片器 -->
+    <div class="content">
+      <div class="slicer-block">
+        <div class="slicer-head">渠道筛选</div>
+        <div class="slicer-row">
+          <span class="slicer-label">渠道:</span>
+          <div class="slicer-pills">
+            <button class="pill active">智趣</button>
+            <button class="pill">猿推库</button>
+            <button class="pill">MCN</button>
+            <button class="pill">星图</button>
+          </div>
+        </div>
+      </div>
+      <div class="hint">
+        顶栏节奏：<b>标题（左上）</b> + 页面导航器（第二行 Tab） + <b>日期切片器（右上）</b>；
+        下方内容区放渠道药丸切片器。<br>
+        顶栏底色 <b>#0F1B30</b>、圆角 12px 顶部、下沿 1px <b>#1E3A5F</b> 分隔线；页面导航器选中态填充 <b>#378ADD</b>。
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.nav-tab, .pill').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const siblings = this.parentElement.querySelectorAll('.nav-tab, .pill');
+        siblings.forEach(s => s.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

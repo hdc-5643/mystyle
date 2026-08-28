@@ -2,7 +2,8 @@
     "privileges": [],
     "dataRoles": [
         {
-            "displayName": "日期字段",
+            "displayName": "日期",
+            "description": "要筛选的日期字段（日期维度表）。",
             "name": "Date",
             "kind": "Grouping"
         }
@@ -131,7 +132,7 @@
             }
         },
         "selection": {
-            "displayName": "切片器设置",
+            "displayName": "下拉样式",
             "properties": {
                 "backgroundColor": {
                     "displayName": "背景色",
@@ -175,51 +176,8 @@
                         }
                     }
                 },
-                "singleSelect": {
-                    "displayName": "单选",
-                    "type": {
-                        "bool": true
-                    }
-                },
-                "ctrlMultiSelect": {
-                    "displayName": "使用 Ctrl 多选",
-                    "type": {
-                        "bool": true
-                    }
-                },
-                "showSelectAll": {
-                    "displayName": "显示“全选”项",
-                    "type": {
-                        "bool": true
-                    }
-                }
-            }
-        },
-        "style": {
-            "displayName": "样式",
-            "properties": {
-                "mode": {
-                    "displayName": "显示样式",
-                    "type": {
-                        "enumeration": [
-                            {
-                                "value": "between",
-                                "displayName": "介于"
-                            },
-                            {
-                                "value": "dropdown",
-                                "displayName": "下拉"
-                            }
-                        ]
-                    }
-                }
-            }
-        },
-        "labels": {
-            "displayName": "值",
-            "properties": {
-                "fontColor": {
-                    "displayName": "字体颜色",
+                "listBackground": {
+                    "displayName": "下拉面板背景色",
                     "type": {
                         "fill": {
                             "solid": {
@@ -228,10 +186,34 @@
                         }
                     }
                 },
-                "fontSize": {
-                    "displayName": "字体大小",
+                "listText": {
+                    "displayName": "下拉面板文字色",
                     "type": {
-                        "numeric": true
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "listHoverText": {
+                    "displayName": "悬浮文字色（只变字、不动背景）",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "listHoverBackground": {
+                    "displayName": "悬浮背景色（默认透明=不变灰）",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
                     }
                 }
             }
@@ -240,9 +222,43 @@
             "displayName": "默认行为",
             "properties": {
                 "defaultThisMonth": {
-                    "displayName": "默认本月（最新日期所在月）",
+                    "displayName": "默认本月（首次加载自动套最新日期所在月）",
                     "type": {
                         "bool": true
+                    }
+                }
+            }
+        },
+        "state": {
+            "displayName": "内部状态（持久化，勿在格式面板中改动）",
+            "properties": {
+                "userOverridden": {
+                    "displayName": "用户是否手动改过区间（兼容旧版本遗留标志）",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "currentPreset": {
+                    "displayName": "当前选中的预设（thisMonth/lastMonth/last7/last15/last30）",
+                    "type": {
+                        "text": true
+                    }
+                }
+            }
+        },
+        "customRange": {
+            "displayName": "自定义区间（持久化，勿在格式面板中改动）",
+            "properties": {
+                "customStart": {
+                    "displayName": "自定义开始日期（ISO，本地时区）",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "customEnd": {
+                    "displayName": "自定义结束日期（ISO，本地时区）",
+                    "type": {
+                        "text": true
                     }
                 }
             }

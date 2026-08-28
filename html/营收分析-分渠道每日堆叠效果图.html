@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>营收分析-分渠道每日堆叠效果图（推荐方案A）</title>
+<style>
+  body {
+    margin: 0;
+    background: #0A1428;
+    font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    color: #FFFFFF;
+  }
+  .container { padding: 24px; }
+  .card {
+    background: #142436;
+    border: 0.5px solid #2C4A6B;
+    border-radius: 10px;
+    padding: 18px 22px 14px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  /* === 标题行 === */
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #FFFFFF;
+  }
+  .meta {
+    font-size: 10px;
+    color: #5F5E5A;
+  }
+
+  /* === 图例 === */
+  .legend {
+    display: flex;
+    gap: 18px;
+    font-size: 10px;
+    color: #B4B2A9;
+    margin-bottom: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .legend span { display: inline-flex; align-items: center; }
+  .legend i { display: inline-block; margin-right: 6px; }
+
+  /* === 图区 === */
+  .chart-area {
+    background: #0F1B30;
+    border-radius: 6px;
+    padding: 12px 8px 6px 8px;
+  }
+  svg { display: block; width: 100%; height: 240px; }
+
+  /* === 横向月份切换 === */
+  .period-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 10px;
+  }
+  .period-chip {
+    height: 24px;
+    padding: 0 12px;
+    border-radius: 4px;
+    background: #0F1B30;
+    border: 0.5px solid #2C4A6B;
+    color: #B4B2A9;
+    line-height: 23px;
+    cursor: pointer;
+  }
+  .period-chip.active {
+    background: #1A2D44;
+    border-color: #378ADD;
+    color: #378ADD;
+  }
+
+  /* === 口径提示条 === */
+  .tip {
+    background: #1A2D44;
+    border-left: 2px solid #7F77DD;
+    padding: 8px 12px;
+    border-radius: 0 4px 4px 0;
+    margin-top: 12px;
+    font-size: 10px;
+    color: #B4B2A9;
+    line-height: 1.6;
+  }
+  .tip strong { color: #AFA9EC; font-weight: 500; }
+
+  /* === 备选方案缩略 === */
+  .alt-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .alt-card {
+    background: #142436;
+    border: 0.5px solid #2C4A6B;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .alt-title {
+    font-size: 11px;
+    color: #FFFFFF;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .alt-desc {
+    font-size: 10px;
+    color: #B4B2A9;
+    line-height: 1.5;
+  }
+  .alt-tag {
+    display: inline-block;
+    font-size: 9px;
+    color: #5F5E5A;
+    margin-right: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <!-- 标题 -->
+    <div class="header-row">
+      <div class="title">分渠道每日营收构成</div>
+      <div class="meta">总期间：2026/8/2 ~ 8/26（25 天）</div>
+    </div>
+
+    <!-- 图例（按渠道贡献度反推的顺序，色固定） -->
+    <div class="legend">
+      <span><i style="width:10px;height:10px;border-radius:2px;background:#5DCAA5;"></i>星图（占比 ≈ 92%）</span>
+      <span><i style="width:10px;height:10px;border-radius:2px;background:#378ADD;"></i>MCN（≈ 4.5%）</span>
+      <span><i style="width:10px;height:10px;border-radius:2px;background:#7F77DD;"></i>猿推库（≈ 1.8%）</span>
+      <span><i style="width:10px;height:10px;border-radius:2px;background:#F0997B;"></i>智趣（≈ 1%）</span>
+    </div>
+
+    <!-- 图区：堆叠面积图 -->
+    <div class="chart-area">
+      <!--
+        viewBox: 0 0 720 240
+        轴范围：x [40, 700]，y [20, 200]  (180px 高)
+        4 个色块按日累计堆叠
+        Y 轴 0~240000（适配实际数据 max ≈ 220k）
+      -->
+      <svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <!-- 横向网格 5 档 -->
+        <line x1="40" y1="20"  x2="700" y2="20"  stroke="#1E3A5F" stroke-width="0.5"/>
+        <line x1="40" y1="56"  x2="700" y2="56"  stroke="#1E3A5F" stroke-width="0.5"/>
+        <line x1="40" y1="92"  x2="700" y2="92"  stroke="#1E3A5F" stroke-width="0.5"/>
+        <line x1="40" y1="128" x2="700" y2="128" stroke="#1E3A5F" stroke-width="0.5"/>
+        <line x1="40" y1="164" x2="700" y2="164" stroke="#1E3A5F" stroke-width="0.5"/>
+        <line x1="40" y1="200" x2="700" y2="200" stroke="#2C4A6B" stroke-width="1"/>
+
+        <!-- 左 Y 轴 5 档标签（0~240000） -->
+        <text x="34" y="24"  text-anchor="end" font-size="9" fill="#5F5E5A">24万</text>
+        <text x="34" y="60"  text-anchor="end" font-size="9" fill="#5F5E5A">19.2万</text>
+        <text x="34" y="96"  text-anchor="end" font-size="9" fill="#5F5E5A">14.4万</text>
+        <text x="34" y="132" text-anchor="end" font-size="9" fill="#5F5E5A">9.6万</text>
+        <text x="34" y="168" text-anchor="end" font-size="9" fill="#5F5E5A">4.8万</text>
+        <text x="34" y="204" text-anchor="end" font-size="9" fill="#5F5E5A">0</text>
+
+        <!-- X 轴日期标签（每 4 天一个） -->
+        <text x="40"  y="218" text-anchor="middle" font-size="9" fill="#5F5E5A">8/2</text>
+        <text x="152" y="218" text-anchor="middle" font-size="9" fill="#5F5E5A">8/5</text>
+        <text x="264" y="218" text-anchor="middle" font-size="9" fill="#5F5E5A">8/9</text>
+        <text x="376" y="218" text-anchor="middle" font-size="9" fill="#5F5E5A">8/13</text>
+        <text x="488" y="218" text-anchor="middle" font-size="9" fill="#5F5E5A">8/17</text>
+        <text x="600" y="218" text-anchor="middle" font-size="9" fill="#5F5E5A">8/21</text>
+        <text x="695" y="218" text-anchor="middle" font-size="9" fill="#5F5E5A">8/26</text>
+
+        <!-- X 轴竖线刻度 -->
+        <line x1="40"  y1="200" x2="40"  y2="204" stroke="#2C4A6B"/>
+        <line x1="152" y1="200" x2="152" y2="204" stroke="#2C4A6B"/>
+        <line x1="264" y1="200" x2="264" y2="204" stroke="#2C4A6B"/>
+        <line x1="376" y1="200" x2="376" y2="204" stroke="#2C4A6B"/>
+        <line x1="488" y1="200" x2="488" y2="204" stroke="#2C4A6B"/>
+        <line x1="600" y1="200" x2="600" y2="204" stroke="#2C4A6B"/>
+        <line x1="695" y1="200" x2="695" y2="204" stroke="#2C4A6B"/>
+
+        <!--
+          堆叠面积图：4 层叠在一起（同 X 数据点）
+          每 25 天总高度（Y 由 200 → 20）映射 0~24万
+          即 1px = 1/180 * 240000 ≈ 1333 元
+          本预览用近似真实数据：星图/MCN 占大头，猿推库/智趣贴底
+        -->
+        <!-- 智趣（最底层）#F0997B ~1%，相对几乎贴线 -->
+        <path d="M 40,200
+                 L 72,200 L 104,200 L 136,200 L 168,200 L 200,200 L 232,200 L 264,200 L 296,200 L 328,200
+                 L 360,200 L 392,200 L 424,200 L 456,200 L 488,200 L 520,200 L 552,200 L 584,200 L 616,200 L 648,200 L 680,200 L 712,200
+                 L 712,200 L 680,200 L 648,200 L 616,200 L 584,200 L 552,200 L 520,200 L 488,200 L 456,200 L 424,200 L 392,200 L 360,200 L 328,200 L 296,200 L 264,200 L 232,200 L 200,200 L 168,200 L 136,200 L 104,200 L 72,200 L 40,200 Z"
+              fill="#F0997B" fill-opacity="0.35" stroke="#F0997B" stroke-opacity="0.7" stroke-width="0.5"/>
+
+        <!-- 猿推库 #7F77DD ~1.8%，仅 ~5px 厚 -->
+        <path d="M 40,200
+                 L 72,200 L 104,200 L 136,200 L 168,200 L 200,200 L 232,199.5 L 264,200 L 296,200 L 328,200
+                 L 360,199.4 L 392,199.8 L 424,200 L 456,200 L 488,199.5 L 520,199 L 552,199.7 L 584,200 L 616,200 L 648,199.6 L 680,199.8 L 712,199.5
+                 L 712,199.5 L 680,199.8 L 648,199.6 L 616,200 L 584,200 L 552,199.7 L 520,199 L 488,199.5 L 456,200 L 424,200 L 392,199.8 L 360,199.4 L 328,200 L 296,200 L 264,200 L 232,199.5 L 200,200 L 168,200 L 136,200 L 104,200 L 72,200 L 40,200 Z"
+              fill="#7F77DD" fill-opacity="0.55" stroke="#7F77DD" stroke-opacity="0.85" stroke-width="0.5"/>
+
+        <!-- MCN #378ADD ~4.5%，~16px 厚 -->
+        <path d="M 40,200
+                 L 72,199 L 104,193 L 136,195 L 168,197 L 200,198 L 232,194 L 264,196 L 296,199 L 328,193
+                 L 360,196 L 392,184 L 424,187 L 456,193 L 488,195 L 520,190 L 552,192 L 584,194 L 616,191 L 648,193 L 680,189 L 712,191
+                 L 712,191 L 680,189 L 648,193 L 616,191 L 584,194 L 552,192 L 520,190 L 488,195 L 456,193 L 424,187 L 392,184 L 360,196 L 328,193 L 296,199 L 264,196 L 232,194 L 200,198 L 168,197 L 136,195 L 104,193 L 72,199 L 40,200 Z"
+              fill="#378ADD" fill-opacity="0.65" stroke="#378ADD" stroke-opacity="0.9" stroke-width="0.5"/>
+
+        <!-- 星图 #5DCAA5 ~92%，最厚层 -->
+        <path d="M 40,200
+                 L 72,180 L 104,98  L 136,73  L 168,55  L 200,29  L 232,30  L 264,135 L 296,82  L 328,65
+                 L 360,140 L 392,84  L 424,100 L 456,50  L 488,45  L 520,135 L 552,90  L 584,110 L 616,100 L 648,75 L 680,160 L 712,150
+                 L 712,150 L 680,160 L 648,75 L 616,100 L 584,110 L 552,90 L 520,135 L 488,45 L 456,50 L 424,100 L 392,84 L 360,140 L 328,65 L 296,82 L 264,135 L 232,30 L 200,29 L 168,55 L 136,73 L 104,98 L 72,180 L 40,200 Z"
+              fill="#5DCAA5" fill-opacity="0.65" stroke="#5DCAA5" stroke-opacity="0.95" stroke-width="0.6"/>
+
+        <!-- 顶部轮廓包络线（总营收）—— 与上方日线图呼应 -->
+        <path d="M 40,200
+                 L 72,180 L 104,97  L 136,72  L 168,54  L 200,28  L 232,29  L 264,134 L 296,81  L 328,64
+                 L 360,139 L 392,83  L 424,99  L 456,49  L 488,44  L 520,134 L 552,89  L 584,109 L 616,99  L 648,74 L 680,159 L 712,149"
+              fill="none" stroke="#AFA9EC" stroke-width="1.2" stroke-opacity="0.85"/>
+
+        <!-- 关键峰值标注（8/5 高峰 ≈ 9.37万） -->
+        <line x1="104" y1="97" x2="104" y2="92" stroke="#AFA9EC" stroke-width="0.8" stroke-dasharray="2,2"/>
+        <text x="115" y="95" font-size="10" font-weight="500" fill="#AFA9EC">93,713</text>
+
+        <!-- 关键低谷标注（8/9 ≈ 1.05万） -->
+        <line x1="264" y1="134" x2="264" y2="129" stroke="#AFA9EC" stroke-width="0.8" stroke-dasharray="2,2"/>
+        <text x="275" y="135" font-size="10" fill="#AFA9EC">10,583</text>
+      </svg>
+    </div>
+
+    <!-- 期间切换 -->
+    <div class="period-row">
+      <div class="period-chip">7D</div>
+      <div class="period-chip">30D</div>
+      <div class="period-chip active">MTD</div>
+      <div class="period-chip">QTD</div>
+      <div class="period-chip">YTD</div>
+    </div>
+
+    <!-- 口径提示 -->
+    <div class="tip">
+      <strong>看图说明：</strong>面积堆叠 = 当日各渠道<strong>贡献绝对值</strong>叠加；紫色顶轮廓线 = 当日<strong>总营收</strong>（与上方日线图同源）。
+      <strong>星图占大头（≈92%）→ 其他渠道起伏在堆叠图里几乎被压扁。</strong>要单独看清猿推库/智趣切换到对应的渠道书签，或用下方建议的"对数轴"或"分面"版。
+    </div>
+  </div>
+
+  <!-- 备选方案缩略 -->
+  <div class="alt-row">
+    <div class="alt-card">
+      <div class="alt-title">B. 累计营收 + 月均参考</div>
+      <div class="alt-desc">单线累积曲线 + 日均×已过天数 影子虚线。<br>一眼看出快/慢于均速。</div>
+      <div class="alt-tag">★ 信息密度高 · 1 条线</div>
+    </div>
+    <div class="alt-card">
+      <div class="alt-title">C. Top 贡献度气泡</div>
+      <div class="alt-desc">按"推广者"维度，X 客单价 / Y 营收 / 气泡=达人数。<br>看谁撑场、谁掉队。</div>
+      <div class="alt-tag">· 需推广者维度</div>
+    </div>
+    <div class="alt-card">
+      <div class="alt-title">D. 收入 × 订单 × 达人数</div>
+      <div class="alt-desc">三轴复合：营收 + 订单数 + 推广达人数同期对比。<br>看是靠客单价还是拉人头。</div>
+      <div class="alt-tag">· 排除 MCN/星图</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

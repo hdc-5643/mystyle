@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>营收分析 · 分渠道收益率（异构版效果图）</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif;
+      background: #0A1428;
+      color: #FFFFFF;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 32px;
+    }
+    .canvas { width: 480px; margin: 0 auto; }
+
+    .card {
+      background: #142436;
+      border: 0.5px solid #2C4A6B;
+      border-radius: 8px;
+      padding: 18px 20px;
+    }
+    .card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title { font-size: 14px; font-weight: 500; color: #FFFFFF; }
+    .action {
+      height: 22px; padding: 0 14px; border-radius: 4px;
+      background: #0F1B30; border: 0.5px solid #378ADD; color: #378ADD;
+      font-size: 11px; line-height: 21px; font-weight: 500;
+      cursor: pointer; transition: all .15s;
+    }
+    .action:hover { background: #378ADD; color: #FFFFFF; }
+
+    /* ============ 顶部 4 个率汇总（异构独立，不合并"综合毛利率"）============ */
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .sum-cell {
+      background: #0F1B30;
+      border-radius: 6px;
+      padding: 10px 12px;
+      border-left: 2px solid transparent;
+    }
+    .sum-cell.fee    { border-left-color: #EF9F27; }
+    .sum-cell.commission { border-left-color: #378ADD; }
+    .sum-cell.margin  { border-left-color: #5DCAA5; }
+    .sum-label {
+      font-size: 10px; color: #B4B2A9;
+      margin-bottom: 5px;
+    }
+    .sum-value {
+      font-size: 16px; font-weight: 500; color: #FFFFFF;
+    }
+    .sum-delta {
+      display: block;
+      font-size: 10px;
+      font-weight: 400;
+      margin-top: 3px;
+    }
+    .delta-up   { color: #5DCAA5; }
+    .delta-down { color: #F0997B; }
+
+    /* ============ 图例 ============ */
+    .legend {
+      display: flex; gap: 14px;
+      font-size: 10px; color: #B4B2A9;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+    .legend-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 2px; margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    /* ============ 分组结构 ============ */
+    .group {
+      margin-bottom: 14px;
+    }
+    .group:last-child { margin-bottom: 0; }
+    .group-head {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 8px;
+      padding-left: 2px;
+    }
+    .group-bar {
+      width: 3px; height: 14px; border-radius: 1.5px;
+    }
+    .group-name {
+      font-size: 11px; font-weight: 500; color: #FFFFFF;
+    }
+    .group-hint {
+      font-size: 10px; color: #5F5E5A;
+      margin-left: auto;
+    }
+
+    .bars { display: flex; flex-direction: column; gap: 8px; }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 110px 1fr 88px;
+      align-items: center;
+      gap: 12px;
+    }
+    .bar-name { display: flex; flex-direction: column; }
+    .bar-name strong { font-size: 12px; font-weight: 500; color: #FFFFFF; }
+    .bar-name span  { font-size: 10px; color: #B4B2A9; margin-top: 2px; }
+
+    .bar-track {
+      height: 12px; background: #0F1B30;
+      border-radius: 2px; overflow: hidden;
+      position: relative;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width .8s ease;
+    }
+
+    .bar-value {
+      text-align: right;
+      font-size: 13px; font-weight: 500;
+    }
+    .bar-value .delta {
+      display: block;
+      font-size: 10px;
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    .footnote {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 0.5px solid #1E3A5F;
+      font-size: 10px; color: #5F5E5A;
+      line-height: 1.7;
+    }
+    .footnote dt { color: #B4B2A9; font-weight: 500; display: inline; }
+    .footnote dd { display: inline; margin: 0 0 0 4px; }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">分渠道收益率</div>
+        <div class="action" onclick="goDetail()">详情 →</div>
+      </div>
+
+      <!-- 顶部 4 个异构率汇总（不合并成"综合毛利率"） -->
+      <div class="summary">
+        <div class="sum-cell fee">
+          <div class="sum-label">智趣服务费率</div>
+          <div class="sum-value">32.5<span style="font-size:11px;">%</span></div>
+          <span class="sum-delta delta-up">↑ +0.8pp</span>
+        </div>
+        <div class="sum-cell fee">
+          <div class="sum-label">猿推库服务费率</div>
+          <div class="sum-value">14.0<span style="font-size:11px;">%</span></div>
+          <span class="sum-delta delta-down">↓ -3.2pp</span>
+        </div>
+        <div class="sum-cell commission">
+          <div class="sum-label">MCN佣金率</div>
+          <div class="sum-value">24.1<span style="font-size:11px;">%</span></div>
+          <span class="sum-delta delta-down">↓ -1.5pp</span>
+        </div>
+        <div class="sum-cell margin">
+          <div class="sum-label">星图毛利率</div>
+          <div class="sum-value">38.2<span style="font-size:11px;">%</span></div>
+          <span class="sum-delta delta-up">↑ +2.1pp</span>
+        </div>
+      </div>
+
+      <!-- 图例（按性质分组） -->
+      <div class="legend">
+        <span><i class="legend-dot" style="background:#EF9F27"></i>服务费率（智趣 / 猿推库）</span>
+        <span><i class="legend-dot" style="background:#378ADD"></i>佣金率（MCN）</span>
+        <span><i class="legend-dot" style="background:#5DCAA5"></i>毛利率（星图）</span>
+      </div>
+
+      <!-- 服务费率组 -->
+      <div class="group">
+        <div class="group-head">
+          <div class="group-bar" style="background:#EF9F27;"></div>
+          <div class="group-name">服务费率</div>
+          <div class="group-hint">服务费 ÷ 订单金额</div>
+        </div>
+        <div class="bars">
+          <div class="bar-row">
+            <div class="bar-name">
+              <strong>智趣</strong>
+              <span>营收 ¥4.5万</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:65%; background:#EF9F27;"></div>
+            </div>
+            <div class="bar-value" style="color:#EF9F27;">
+              32.5%
+              <span class="delta delta-up">↑ +0.8pp</span>
+            </div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-name">
+              <strong>猿推库</strong>
+              <span>营收 ¥8.3万</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:28%; background:#BA7517;"></div>
+            </div>
+            <div class="bar-value" style="color:#BA7517;">
+              14.0%
+              <span class="delta delta-down">↓ -3.2pp</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 佣金率组 -->
+      <div class="group">
+        <div class="group-head">
+          <div class="group-bar" style="background:#378ADD;"></div>
+          <div class="group-name">佣金率</div>
+          <div class="group-hint">佣金 ÷ GMV</div>
+        </div>
+        <div class="bars">
+          <div class="bar-row">
+            <div class="bar-name">
+              <strong>MCN</strong>
+              <span>营收 ¥25.7万</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:48%; background:#378ADD;"></div>
+            </div>
+            <div class="bar-value" style="color:#378ADD;">
+              24.1%
+              <span class="delta delta-down">↓ -1.5pp</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 毛利率组 -->
+      <div class="group">
+        <div class="group-head">
+          <div class="group-bar" style="background:#5DCAA5;"></div>
+          <div class="group-name">毛利率</div>
+          <div class="group-hint">(收入 − 成本) ÷ 收入</div>
+        </div>
+        <div class="bars">
+          <div class="bar-row">
+            <div class="bar-name">
+              <strong>星图</strong>
+              <span>营收 ¥61.0万</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:76%; background:#5DCAA5;"></div>
+            </div>
+            <div class="bar-value" style="color:#5DCAA5;">
+              38.2%
+              <span class="delta delta-up">↑ +2.1pp</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footnote">
+        <dl>
+          <dt>口径说明：</dt>
+          <dd>三个率定义不同、阈值不同、不可跨组比较数值高低。</dd>
+        </dl>
+        <dl style="margin-top:4px;">
+          <dt>pp</dt>
+          <dd>= 百分点（percentage point），同比变化用。</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function goDetail() {
+      var msg = { type: 'navigate', page: 'channel-rate', tab: 'all' };
+      try { window.top.postMessage(msg, '*'); }
+      catch (e) {
+        alert('跳转消息已发出（本地预览）：\n' + JSON.stringify(msg, null, 2));
+      }
+    }
+  </script>
+</body>
+</html>
