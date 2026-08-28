@@ -1,3 +1,18 @@
+## 2.4.4.0
+* **「标头 + 触发器」固定贴视觉对象顶部**：视觉对象被拉高时，内容行不再垂直居中、不再在顶部留大片空白。两种标头布局（顶部 / 左侧）均已贴顶。本次**仅改 LESS，JS 逻辑零改动**。
+  * **修复左侧布局的垂直居中（用户反馈的截图问题）**：`.drs-layout-left` 是 `flex-direction: row`，主轴水平，此时 `align-items: center` 作用于**交叉轴（垂直）**，把高度仅 30px 的 `.drs-body` 垂直居中 → 上下各留空白。改为 `align-items: flex-start` 后整行贴顶。
+  * **修复顶部布局下面板被裁切的隐藏 bug（此前未暴露）**：`.drs-layout-top` 是 `flex-direction: column`，主轴垂直，`.drs-body` 的 `flex: 1 1 auto` 会沿**主轴（垂直）**拉伸到视觉对象剩余的全部高度。而 `.drs-panel` 用 `top: calc(100% + 4px)` 定位，其中 `100%` 正是 body 的高度 → 面板被推到视觉对象底部之外，被 iframe `overflow:hidden` **完全裁切、几乎不可见**。新增 `.drs-layout-top .drs-body { flex: 0 0 auto; }` 禁止拉伸。
+    * 注意必须用 `flex` 而非 `align-self`：后者只作用于交叉轴（此处为水平），无法阻止主轴（垂直）方向的拉伸。
+  * 新增 `.drs-layout-left .drs-header { min-height: 30px; }`，使左侧布局下标头与触发器（固定 30px）等高、文字垂直居中对齐。
+  * **不变量（后续维护必读）**：`.drs-body` 的高度必须等于触发器高度（30px）。body 一旦被拉伸，`calc(100% + 4px)` 定位即失效。
+* **行为变化的副作用（已知且符合预期）**：左侧布局贴顶后，触发器上方不再有空间，`positionPanel()` 实测的 `spaceAbove` 由 `(H-30)/2-4` 变为 `-4`（H 为视觉容器高度）。
+  * 后果：`avail < natural && spaceAbove > avail` 的**向上翻转条件基本不再成立**，左侧布局下面板不再向上翻转 —— 这正是「触发器贴顶优先」的预期取舍。
+  * 极矮兜底（`.drs-panel-inline` 流内展开）的触发阈值由 `H < 238px` 变为 `H < 134px`，即矮视觉下更晚才退化，面板限高滚动的可用空间更大。
+  * `positionPanel()` 基于 `getBoundingClientRect()` 实测，与 CSS 解耦，故无需修改 JS。
+* **排查结论**：已用 code-explorer 全量核对，`.drs-body` 在构造之后**没有任何 JS 读取或依赖**（无 `getBoundingClientRect`/`offsetHeight`/`getComputedStyle`/`ResizeObserver`），`positionPanel()` 仅测 root 与 trigger。故本次纯样式改动不影响任何 JS 逻辑，测试目录下亦无相关用例。
+* **一处无效声明已如实标注**：`.dateRangeSlicer` 基础规则的 `align-items` 改为 `flex-start` 属**兜底默认值** —— 两个 layout class 各自声明了同名属性且后声明，会完全覆盖基础值；仅对 `applyStyles()` 执行前（root 尚无 layout class）的窗口期生效。
+* 未改动 `capabilities.json`，**GUID 保持 `DateRangeSlicer20260825004`**，兼容热加载升级；若 PBI Desktop 看不到效果，删除画布上的旧视觉实例后重新导入。
+
 ## 2.4.3.0
 * **补齐下拉面板的收起（回收）机制**：此前点预设选项才会收起面板，点视觉内部空白（标头、面板 padding、分隔箭头、视觉容器边缘）或点报表画布其他位置都收不起来，面板会一直停留展开。本次补两条通道：
   * **视觉内非交互区域点击即收起**：改造 `docClickHandler`（document capture 阶段），新增「视觉内但不在交互白名单内 → 收起」分支。白名单＝**触发器 + 5 个预设按钮 + 开始/结束日期输入框**（含其内部节点如日历图标），其余一切区域（标头文字、面板内边距空白、日期行分隔箭头、视觉容器边缘空白）均视为空白、点击即收起，采用最严格判定。

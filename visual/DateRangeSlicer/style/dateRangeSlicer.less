@@ -1,7 +1,9 @@
 .dateRangeSlicer {
     position: relative;
     display: flex;
-    align-items: center;
+    /* 默认顶部对齐。注意：本值会被下面的 .drs-layout-* 同名属性覆盖，
+       仅作为 applyStyles() 执行前（root 尚无 layout class 时）的兜底默认值 */
+    align-items: flex-start;
     width: 100%;
     height: 100%;
     box-sizing: border-box;
@@ -25,7 +27,9 @@
 }
 .drs-layout-left {
     flex-direction: row;
-    align-items: center;
+    /* 交叉轴（垂直）顶部对齐：原 center 会把「标头 + 触发器」整行垂直居中，
+       视觉对象被拉高时上方留大片空白。改为 flex-start 后整行贴顶 */
+    align-items: flex-start;
     justify-content: flex-start;
     gap: 6px;
 }
@@ -34,6 +38,7 @@
    保证「标头位置=左侧」时面板仍落在触发器正下方而不是排到右侧 */
 .drs-body {
     position: relative;
+    /* left 布局（主轴水平）：沿水平方向填充标头之外的剩余宽度，高度 = 内容高度 */
     flex: 1 1 auto;
     min-width: 0;
     min-height: 0;
@@ -41,11 +46,30 @@
     flex-direction: column;
 }
 
+/**
+ * 不变量：.drs-body 的高度必须 = 触发器高度（30px）。
+ * 面板 .drs-panel 用 top: calc(100% + 4px) 定位，其中 100% 就是 body 的高度；
+ * body 一旦被拉伸，面板就会被推到视觉对象底部之外、被 iframe overflow:hidden 裁掉。
+ *
+ * top 布局的主轴是垂直方向，上面的 flex:1 1 auto 会让 body 沿主轴拉伸到
+ * 视觉对象的剩余全部高度（面板因此被推到容器外）。这里改 flex: 0 0 auto 禁止拉伸。
+ * 注意：必须用 flex 而非 align-self —— 后者只作用于交叉轴（此处为水平），
+ * 无法阻止主轴（垂直）方向的拉伸。
+ */
+.drs-layout-top .drs-body {
+    flex: 0 0 auto;
+}
+
 .drs-header {
     display: flex;
     flex: 0 0 auto;
     align-items: center;
     min-width: 0;
+}
+
+/* left 布局下标头与触发器等高对齐（触发器固定 30px），标头文字垂直居中 */
+.drs-layout-left .drs-header {
+    min-height: 30px;
 }
 
 .drs-label {
