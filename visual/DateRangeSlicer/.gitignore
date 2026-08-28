@@ -6,4 +6,9 @@ typings
 *.log
 /coverage
 
+# pbiviz 构建中间产物 / 调试残留（体积大且每次构建都会重新生成，不应入库）
+.tmp_pbiviz.json
+popup.txt
+fixed.txt
+
 webpack.statistics.*.html
