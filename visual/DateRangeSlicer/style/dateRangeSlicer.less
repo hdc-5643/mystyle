@@ -131,17 +131,21 @@
 .drs-panel {
     display: none;
     position: absolute;
-    /* 右对齐触发器：右边缘贴齐，需要更宽时向左扩展。
-       避免触发器被调短后面板跟着变窄、内部日期输入框被挤压溢出 */
+    /* 右对齐触发器：右边缘贴齐 */
     right: 0;
     left: auto;
     top: calc(100% + 4px);
     z-index: 1000;
     box-sizing: border-box;
-    width: max-content;
-    min-width: 100%;
-    /* 单列列表不需要太宽：触发器很宽时也不把列表拉成宽带，保持列表观感 */
-    max-width: 220px;
+    /*
+     * 面板宽度严格 = 触发器宽度（.drs-body 宽度即触发器宽度，100% 即等于它）。
+     *
+     * 这里刻意不用 v2.4.2 引入的 `width:max-content; min-width:100%; max-width:220px`
+     * 那套组合：它会让面板宽度**脱离**触发器（触发器窄于内容最小宽时面板更宽，
+     * 宽于 max-width 时面板更窄），表现为「列表和触发器不一样宽」。
+     * 该组合当年是为防日期输入框被挤压而加，v2.5 移除日期框后已无必要。
+     */
+    width: 100%;
     padding: 10px;
     background: var(--drs-list-bg, #0A1428);
     border: 1px solid var(--drs-border);
@@ -165,10 +169,8 @@
 /* 视觉框极矮（上下都放不下）：退化为视觉内流内展开，保证内容可见 */
 .drs-panel.drs-panel-open.drs-panel-inline {
     position: static;
-    /* 流内展开时复位宽度约束，避免 min-width:100% + max-content 撑坏布局 */
-    width: auto;
-    min-width: 0;
-    max-width: none;
+    /* 流内展开时仍保持与触发器同宽；absolute 定位下的 100% 在 static 下同样有效 */
+    width: 100%;
     margin-top: 6px;
     box-shadow: none;
     animation: none;
@@ -184,11 +186,13 @@
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-/* 单列垂直列表：面板因此变得窄而高，视觉对象被调窄时也不易被挤压 */
+/* 单列垂直列表：宽度跟随面板（= 触发器宽度），不再自撑最小宽度 */
 .drs-preset-grid {
     display: grid;
-    /* 单列；100px 最小宽度保证「近 30 天」等文案不被压成两行 */
-    grid-template-columns: minmax(100px, 1fr);
+    /* 单列。注意不能用 minmax(100px, 1fr)：容器窄于 100px 时列会被撑到 100px
+       从而溢出于面板（面板有 overflow-x:hidden，表现为文字被裁掉）。
+       改用 1fr 让列严格跟随面板宽度，文字截断交给 .drs-preset 的 ellipsis。 */
+    grid-template-columns: 1fr;
     gap: 6px;
 }
 .drs-preset {
@@ -200,6 +204,9 @@
     text-align: left;
     cursor: pointer;
     white-space: nowrap;
+    /* 触发器很窄时文字省略而非溢出被裁（面板宽度 = 触发器宽度） */
+    overflow: hidden;
+    text-overflow: ellipsis;
     border-radius: var(--drs-radius);
     border: 1px solid transparent;
     background: rgba(255, 255, 255, 0.03);
