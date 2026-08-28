@@ -2,8 +2,8 @@
     "privileges": [],
     "dataRoles": [
         {
-            "displayName": "日期",
-            "description": "要筛选的日期字段（日期维度表）。",
+            "displayName": "日期/文本字段",
+            "description": "要筛选的字段。预设模式下应为日期字段；列表模式下日期与文本字段均可。",
             "name": "Date",
             "kind": "Grouping"
         }
@@ -37,6 +37,26 @@
         }
     ],
     "objects": {
+        "mode": {
+            "displayName": "切片器模式",
+            "properties": {
+                "mode": {
+                    "displayName": "模式",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "value": "preset",
+                                "displayName": "预设区间（本月/上月/近N天）"
+                            },
+                            {
+                                "value": "list",
+                                "displayName": "值列表（字段唯一值，多选）"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
         "general": {
             "displayName": "常规",
             "properties": {
@@ -214,6 +234,23 @@
                                 "color": true
                             }
                         }
+                    }
+                }
+            }
+        },
+        "listBehavior": {
+            "displayName": "列表模式行为",
+            "properties": {
+                "showSearch": {
+                    "displayName": "显示搜索框",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "showSelectAll": {
+                    "displayName": "显示「（全选）」项",
+                    "type": {
+                        "bool": true
                     }
                 }
             }

@@ -11,7 +11,16 @@ import FormattingCard = powerbi.visuals.FormattingCard;
 import FormattingGroup = powerbi.visuals.FormattingGroup;
 import FormattingDescriptor = powerbi.visuals.FormattingDescriptor;
 
-import { AdvancedFilter } from "powerbi-models";
+import { AdvancedFilter, BasicFilter, BasicFilterOperators } from "powerbi-models";
+
+/**
+ * ⚠️ powerbi-models 的 BasicFilterOperators 是 const enum（编译期内联，运行时无对象）：
+ * - 直接 `BasicFilterOperators.Is` 当值用 → 报 "only refers to a type, but is being used as a value"
+ * - 直接传字符串字面量 "Is" → 报 "not assignable to parameter of type 'BasicFilterOperators'"
+ * 唯一可行写法是类型断言：运行时仍是字符串，类型也满足。
+ */
+const OP_IS = "Is" as BasicFilterOperators;
+const OP_IN = "In" as BasicFilterOperators;
 
 import "./../style/dateRangeSlicer.less";
 
@@ -26,7 +35,19 @@ const PRESETS: { key: string; name: string }[] = [
     { key: "last30", name: "近30天" }
 ];
 
+/** 模式枚举：preset=预设区间（AdvancedFilter 介于），list=值列表多选（BasicFilter Is/In） */
+const MODE = { PRESET: "preset", LIST: "list" } as const;
+/** 「（全选）」项的哨兵 key，不参与筛选值下发 */
+const ALL_KEY = "__all__";
+
 const DEFAULTS = {
+    // 切片器模式：preset / list
+    mode: "preset",
+    // 列表模式行为
+    listBehavior: {
+        showSearch: true,
+        showSelectAll: true
+    },
     header: {
         show: true,
         title: "结算日期",
@@ -71,6 +92,25 @@ export class DateRangeSlicer implements IVisual {
     private panelEl: HTMLElement;
     private presetEls: HTMLElement[] = [];
     private isPanelOpen: boolean = false;
+
+    // ---- 列表模式（mode=list）：字段唯一值多选 ----
+    /** 搜索框（仅列表模式显示） */
+    private searchEl: HTMLInputElement = null;
+    /** 列表容器（全选项 + N 个唯一值项） */
+    private listEl: HTMLElement = null;
+    /**
+     * 唯一值项：display=界面显示文本，raw=下发给筛选的原始值。
+     * 二者必须分开：显示用 YYYY/M/D，但筛选必须回传 Power BI 原始值才能匹配。
+     */
+    private listValues: { display: string; raw: any }[] = [];
+    /** 已选中的项（存 display 字符串，即去重后的显示值） */
+    private selectedKeys: Set<string> = new Set<string>();
+    /** 列表项 DOM（用于交互白名单与选中态维护） */
+    private listItemEls: HTMLElement[] = [];
+    /** 上一次渲染时的模式，用于检测模式切换并清理另一模式的筛选 */
+    private lastMode: string = "";
+    /** 列表模式下是否由本视觉自身下发了筛选（用于区分外部清除） */
+    private listFilterApplied: boolean = false;
     /**
      * 旧报表里已保存的自定义区间（由 customRange 持久化对象恢复）。
      * v2.5 起面板内不再提供日期输入框，无法再新建自定义区间；
@@ -155,6 +195,20 @@ export class DateRangeSlicer implements IVisual {
             this.presetEls.push(btn);
         }
         this.panelEl.appendChild(presetGrid);
+
+        // ---------- 列表模式：搜索框 + 唯一值列表 ----------
+        this.searchEl = document.createElement("input");
+        this.searchEl.type = "text";
+        this.searchEl.className = "drs-search";
+        this.searchEl.setAttribute("aria-label", "搜索");
+        this.searchEl.placeholder = "搜索…";
+        // 输入即过滤，不触发面板收起（本元素已加入 isInteractiveTarget 白名单）
+        this.searchEl.addEventListener("input", () => this.renderList());
+        this.panelEl.appendChild(this.searchEl);
+
+        this.listEl = document.createElement("div");
+        this.listEl.className = "drs-list";
+        this.panelEl.appendChild(this.listEl);
 
         this.triggerEl.addEventListener("click", (e) => {
             e.stopPropagation();
@@ -252,7 +306,35 @@ export class DateRangeSlicer implements IVisual {
         // 每次刷新都重新计算数据 min/max，保证预设区间始终基于最新数据
         this.resolveRange(dv);
 
+        // 模式切换：清掉另一模式留下的筛选，避免两种语义（介于 vs Is/In）冲突
+        if (this.lastMode && this.lastMode !== this.settings.mode) {
+            this.host.applyJsonFilter(null, "general", "filter", FilterAction.remove);
+            this.selectedKeys.clear();
+            this.currentPreset = DEFAULTS.currentPreset;
+            this.customRange = { start: null, end: null };
+            this.isInitialized = false;
+        }
+        this.lastMode = this.settings.mode;
+
         const filterPresent = !!(options.jsonFilters && options.jsonFilters[0]);
+
+        // ---------- 列表模式：完全独立的分支 ----------
+        // ⚠️ 必须分流：BasicFilter 没有 conditions 字段，若让它流到下面预设模式的
+        // 「非介于型筛选→清除并回到默认预设」分支，列表模式每选一次筛选就会被自己的
+        // update 立刻清掉，表现为「选了没反应」。
+        if (this.settings.mode === MODE.LIST) {
+            this.resolveListValues(dv);
+            if (filterPresent) {
+                this.restoreListSelection(options.jsonFilters[0]);
+            } else {
+                // 外部清除筛选（如「清除所有筛选器」）→ 回到全选态
+                this.selectedKeys.clear();
+            }
+            this.renderList();
+            this.deriveTriggerLabel();
+            this.lastFilterPresent = filterPresent;
+            return;
+        }
 
         if (filterPresent) {
             const f: any = options.jsonFilters[0];
@@ -492,7 +574,55 @@ export class DateRangeSlicer implements IVisual {
             ]
         };
 
-        return { cards: [headerCard, selectionCard, defaultBehaviorCard] };
+        // 模式选择卡片：放在最前，便于一眼切换 preset / list
+        const modeCard: FormattingCard = {
+            displayName: "切片器模式",
+            uid: "drs-mode-card",
+            groups: [
+                {
+                    displayName: "模式",
+                    uid: "drs-mode-group",
+                    collapsible: false,
+                    slices: [
+                        {
+                            displayName: "选择模式",
+                            uid: "drs-mode-dropdown",
+                            control: dropdown("mode", "mode", this.settings.mode, [
+                                { value: "preset", displayName: "预设区间（本月/上月/近N天）" },
+                                { value: "list", displayName: "值列表（字段唯一值，多选）" }
+                            ])
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // 列表模式专属行为卡片（仅列表模式下有意义）
+        const listBehaviorCard: FormattingCard = {
+            displayName: "列表模式行为",
+            uid: "drs-listbehavior-card",
+            groups: [
+                {
+                    displayName: "列表",
+                    uid: "drs-listbehavior-group",
+                    collapsible: true,
+                    slices: [
+                        {
+                            displayName: "显示搜索框",
+                            uid: "drs-listbehavior-search-toggle",
+                            control: toggleSwitch("listBehavior", "showSearch", this.settings.listBehavior.showSearch)
+                        },
+                        {
+                            displayName: "显示「（全选）」项",
+                            uid: "drs-listbehavior-selectall-toggle",
+                            control: toggleSwitch("listBehavior", "showSelectAll", this.settings.listBehavior.showSelectAll)
+                        }
+                    ]
+                }
+            ]
+        };
+
+        return { cards: [modeCard, headerCard, selectionCard, listBehaviorCard, defaultBehaviorCard] };
     }
 
     private resolveTarget(dv: DataView): void {
@@ -580,6 +710,196 @@ export class DateRangeSlicer implements IVisual {
         } catch (e) {
             return null;
         }
+    }
+
+    // ==================== 列表模式（mode=list）：字段唯一值多选 ====================
+
+    /**
+     * 从分类列提取唯一值，按显示文本去重，降序排列（日期最新在前 / 文本 Z→A）。
+     *
+     * ⚠️ display 与 raw 必须分开：display 只用于界面显示（YYYY/M/D，去前导零），
+     * raw 必须是 Power BI 下发的原始值——筛选回传原始值才能与模型里的列正确匹配，
+     * 若误把格式化后的显示字符串当筛选值会匹配不到任何数据。
+     */
+    private resolveListValues(dv: DataView): void {
+        this.listValues = [];
+        try {
+            const cats = dv.categorical && dv.categorical.categories;
+            if (!cats || cats.length === 0 || !cats[0].values) {
+                return;
+            }
+            const values = cats[0].values;
+            const byDisplay = new Map<string, { display: string; raw: any; sortKey: any }>();
+
+            for (const v of values) {
+                if (v == null || v === "") {
+                    continue;
+                }
+                const d = this.parseDate(v);
+                if (d) {
+                    // 日期字段：显示 YYYY/M/D，排序按 Date 时间戳
+                    const display = this.toDisplayDate(d);
+                    if (!byDisplay.has(display)) {
+                        byDisplay.set(display, { display, raw: v, sortKey: d.getTime() });
+                    }
+                    continue;
+                }
+                // 非日期（文本/数值）：原样显示与排序
+                const display = String(v);
+                if (!byDisplay.has(display)) {
+                    byDisplay.set(display, { display, raw: v, sortKey: display });
+                }
+            }
+
+            this.listValues = Array.from(byDisplay.values())
+                .sort((a, b) => {
+                    // 同为数字时间戳按数值降序，否则按字符串降序（localeCompare）
+                    if (typeof a.sortKey === "number" && typeof b.sortKey === "number") {
+                        return b.sortKey - a.sortKey;
+                    }
+                    return String(b.sortKey).localeCompare(String(a.sortKey));
+                })
+                .map((x) => ({ display: x.display, raw: x.raw }));
+        } catch (e) {
+            this.listValues = [];
+        }
+    }
+
+    /** 渲染列表：全选项（可选）+ 唯一值项（受搜索词过滤） */
+    private renderList(): void {
+        if (!this.listEl) {
+            return;
+        }
+        this.listEl.textContent = "";
+        this.listItemEls = [];
+
+        const kw = (this.searchEl ? this.searchEl.value : "").trim().toLowerCase();
+        const items = kw
+            ? this.listValues.filter((it) => it.display.toLowerCase().indexOf(kw) >= 0)
+            : this.listValues;
+
+        // 「（全选）」：清空筛选；全选态＝未选任何项
+        if (this.settings.listBehavior.showSelectAll) {
+            const all = this.createListItem(ALL_KEY, "（全选）", this.selectedKeys.size === 0);
+            all.addEventListener("click", (e) => {
+                e.stopPropagation();
+                this.selectAllListItems();
+            });
+            this.listEl.appendChild(all);
+        }
+
+        if (items.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "drs-list-empty";
+            empty.textContent = kw ? "无匹配项" : "无数据";
+            this.listEl.appendChild(empty);
+            return;
+        }
+
+        for (const it of items) {
+            const el = this.createListItem(it.display, it.display, this.selectedKeys.has(it.display));
+            el.addEventListener("click", (e) => {
+                e.stopPropagation();
+                this.toggleListItem(it.display);
+            });
+            this.listEl.appendChild(el);
+        }
+    }
+
+    /** 创建单个列表项 DOM（key 存 data-key，用于白名单与选中态） */
+    private createListItem(key: string, text: string, selected: boolean): HTMLElement {
+        const el = document.createElement("button");
+        el.type = "button";
+        el.className = selected ? "drs-list-item active" : "drs-list-item";
+        el.setAttribute("data-key", key);
+        el.textContent = text;
+        this.listItemEls.push(el);
+        return el;
+    }
+
+    /** 勾选/取消某一项，立即下发筛选 */
+    private toggleListItem(display: string): void {
+        if (this.selectedKeys.has(display)) {
+            this.selectedKeys.delete(display);
+        } else {
+            this.selectedKeys.add(display);
+        }
+        this.applyListFilter();
+        this.renderList();
+        this.deriveTriggerLabel();
+    }
+
+    /** 全选＝清空筛选（不选中任何具体值） */
+    private selectAllListItems(): void {
+        this.selectedKeys.clear();
+        this.applyListFilter();
+        this.renderList();
+        this.deriveTriggerLabel();
+        // 与预设模式一致：选完立即收起面板
+        this.closePanel();
+    }
+
+    /**
+     * 列表模式筛选下发：
+     * - 未选任何项 → 清除筛选（等价全选）
+     * - 选 1 项 → BasicFilter Is；选多项 → BasicFilter In
+     * 下发的是 raw（Power BI 原始值），不是显示文本。
+     */
+    private applyListFilter(): void {
+        if (!this.target.table || !this.target.column) {
+            return;
+        }
+        if (this.selectedKeys.size === 0) {
+            this.host.applyJsonFilter(null, "general", "filter", FilterAction.remove);
+            this.listFilterApplied = false;
+            return;
+        }
+        const raws: any[] = [];
+        for (const it of this.listValues) {
+            if (this.selectedKeys.has(it.display)) {
+                raws.push(it.raw);
+            }
+        }
+        if (raws.length === 0) {
+            return;
+        }
+        const filter = raws.length === 1
+            ? new BasicFilter(this.target, OP_IS, raws[0])
+            : new BasicFilter(this.target, OP_IN, raws);
+        this.host.applyJsonFilter(filter, "general", "filter", FilterAction.merge);
+        this.listFilterApplied = true;
+    }
+
+    /**
+     * 切页恢复：从 BasicFilter 解析已保存的选中值，回写 selectedKeys。
+     * 注意比对用 display 文本——筛选里的 raw 与本次下发的 values 形式可能不同
+     * （Date 对象 / ISO 字符串 / 时间戳），统一转成 display 后再比对才稳。
+     */
+    private restoreListSelection(f: any): void {
+        this.selectedKeys.clear();
+        try {
+            const vals: any[] = f && f.values ? f.values : null;
+            if (!vals || vals.length === 0) {
+                return;
+            }
+            const wanted = new Set<string>();
+            for (const v of vals) {
+                const d = this.parseDate(v);
+                wanted.add(d ? this.toDisplayDate(d) : String(v));
+            }
+            for (const it of this.listValues) {
+                if (wanted.has(it.display)) {
+                    this.selectedKeys.add(it.display);
+                }
+            }
+        } catch (e) {
+            /* 解析失败保持空选中，不影响使用 */
+        }
+    }
+
+    /** 日期显示格式：YYYY/M/D（去前导零），用于列表项的界面显示 */
+    private toDisplayDate(d: Date): string {
+        return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
     }
 
     private parseDate(v: any): Date | null {
@@ -764,10 +1084,20 @@ export class DateRangeSlicer implements IVisual {
         this.closePanel();
     }
 
-    /** 派生第一层触发器文本：自定义区间显示「M月D日 - M月D日」，否则显示预设名 */
+    /** 派生触发器文本：列表模式显示已选摘要，预设模式显示预设名或自定义区间 */
     private deriveTriggerLabel(): void {
         let txt: string;
-        if (this.customRange.start && this.customRange.end) {
+        if (this.settings.mode === MODE.LIST) {
+            const n = this.selectedKeys.size;
+            if (n === 0) {
+                txt = "（全选）";
+            } else if (n === 1) {
+                // 唯一一项直接显示值本身，比「已选 1 项」更直观
+                txt = Array.from(this.selectedKeys)[0];
+            } else {
+                txt = `已选 ${n} 项`;
+            }
+        } else if (this.customRange.start && this.customRange.end) {
             const f = (d: Date) => `${d.getMonth() + 1}月${d.getDate()}日`;
             txt = `${f(this.customRange.start)} - ${f(this.customRange.end)}`;
         } else {
@@ -802,15 +1132,24 @@ export class DateRangeSlicer implements IVisual {
 
     /**
      * 交互白名单：命中则保持面板展开，其余一切区域视为空白、点击即收起。
-     * 白名单＝触发器 + 5 个预设按钮。
+     * 白名单＝触发器 + 5 个预设按钮 + 搜索框 + 列表项。
      * 用白名单而非「是否在面板内」的黑名单，是为了满足「除交互元素外一律收起」的最严格判定：
      * 面板内的 padding 空白、标头文字等装饰性区域都不豁免。
+     *
+     * ⚠️ 搜索框必须在此白名单内：否则用户一点搜索框就会被判定为「点空白」而收起面板，
+     * 搜索功能完全不可用（v2.4.3 确立的白名单机制，新增交互元素时极易漏加）。
      */
     private isInteractiveTarget(target: Node): boolean {
         if (!target) {
             return false;
         }
         if (this.triggerEl.contains(target)) {
+            return true;
+        }
+        if (this.searchEl && this.searchEl.contains(target)) {
+            return true;
+        }
+        if (this.listEl && this.listEl.contains(target)) {
             return true;
         }
         for (const el of this.presetEls) {
@@ -955,6 +1294,18 @@ export class DateRangeSlicer implements IVisual {
         const bool = (v: any, fb: boolean): boolean => (v == null ? fb : (v === true || v === "true" || v === 1 || v === "1"));
         const txt = (v: any, fb: string): string => (v == null ? fb : (typeof v === "string" ? v : (v.solid ? v.solid.color : String(v))));
 
+        // 切片器模式：preset（预设区间） / list（值列表多选）
+        const mo = objs.mode || {};
+        this.settings.mode = txt(mo.mode, DEFAULTS.mode);
+        if (this.settings.mode !== MODE.LIST) {
+            this.settings.mode = MODE.PRESET; // 未知值一律回落预设模式
+        }
+
+        // 列表模式行为
+        const lb = objs.listBehavior || {};
+        this.settings.listBehavior.showSearch = bool(lb.showSearch, DEFAULTS.listBehavior.showSearch);
+        this.settings.listBehavior.showSelectAll = bool(lb.showSelectAll, DEFAULTS.listBehavior.showSelectAll);
+
         const h = objs.header || {};
         this.settings.header.show = bool(h.show, DEFAULTS.header.show);
         this.settings.header.position = txt(h.position, DEFAULTS.header.position);
@@ -1025,6 +1376,18 @@ export class DateRangeSlicer implements IVisual {
         this.labelEl.style.fontWeight = h.bold ? "bold" : "normal";
         this.labelEl.style.fontStyle = h.italic ? "italic" : "normal";
         this.labelEl.style.textDecoration = h.underline ? "underline" : "none";
+
+        // 按模式切换面板内容：预设模式显示预设网格，列表模式显示搜索框 + 值列表。
+        // 用 display 切换而非增删 DOM，避免重复绑定监听与重建开销。
+        const isList = this.settings.mode === MODE.LIST;
+        const grid = this.panelEl.querySelector(".drs-preset-grid") as HTMLElement;
+        if (grid) {
+            grid.style.display = isList ? "none" : "grid";
+        }
+        this.searchEl.style.display = (isList && this.settings.listBehavior.showSearch) ? "block" : "none";
+        this.listEl.style.display = isList ? "block" : "none";
+        // 列表模式：搜索框固定、列表区内部滚动；预设模式：面板整体滚动
+        this.panelEl.classList.toggle("drs-panel-list-mode", isList);
 
         // 原生下拉样式变量（CSS 通过 var() 应用到 select）
         this.root.style.setProperty("--drs-bg", s.backgroundColor);

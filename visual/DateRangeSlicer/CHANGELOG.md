@@ -1,3 +1,40 @@
+## 2.6.0.0
+* **新增「列表模式」：字段唯一值下拉多选（日期与文本字段均支持）**。格式面板「切片器模式」卡片可在两种模式间切换：
+  * **预设区间**（默认，既有一切行为不变）：单列 5 个预设，走 `AdvancedFilter`（GreaterThanOrEqual + LessThan）介于筛选。
+  * **值列表**：把拖入字段的**唯一值**列成单列列表，支持**多选**，日期字段显示 `YYYY/M/D`、文本字段原样显示，走 `BasicFilter`（选 1 项用 `Is`，多项用 `In`）。
+* **列表模式的具体行为**（按用户确认的四项决策实现）：
+  * **多选**：点项即切换选中态并立即下发，可累加；再次点击取消。
+  * **「（全选）」项**：置顶，勾选＝清空筛选（对应 `applyJsonFilter(null, ..., remove)`）；未选任何项时该项呈选中态。
+  * **搜索框**：面板顶部，输入即实时过滤（按显示文本做包含匹配，不区分大小写）。
+  * **排序**：降序——日期按时间戳最新在前，文本按 `localeCompare` 降序（Z→A）。
+  * 触发器文本：未选显示「（全选）」，选 1 项直接显示该项值，选多项显示「已选 N 项」。
+* **⚠️ 修复了一个会让列表模式完全不可用的高危坑**：`update()` 中原先对「非介于型筛选」的处理是
+  `applyJsonFilter(null, ..., remove)` + 回到默认预设（为兼容其它视觉下发的 Is/In 而加）。
+  而列表模式自己下发的正是 `BasicFilter`（**没有 `conditions` 字段**），
+  若不分流，用户每选一次筛选就会被自己紧接着的 `update()` 立刻清掉，表现为「选了没反应」。
+  **现已按模式在 `update()` 中完全分流**：列表模式走独立分支（`resolveListValues` → `restoreListSelection` → `renderList`），
+  绝不进入预设模式的清除逻辑。
+* **⚠️ 搜索框已加入交互白名单**：v2.4.3 确立的机制是「视觉内除白名单外一切区域点击即收起」。
+  搜索框与列表容器是新增交互元素，若漏加白名单，用户一点搜索框面板就会收起、搜索功能形同虚设。
+  现 `isInteractiveTarget()` 白名单为：触发器 + 预设按钮 + **搜索框** + **列表容器**。
+* **⚠️ TS 坑：`BasicFilterOperators` 是 const enum**（编译期内联、运行时无对象）。
+  直接 `BasicFilterOperators.Is` 当值用报 "only refers to a type"；
+  直接传字符串 `"Is"` 报 "not assignable to parameter of type"。
+  **唯一可行写法是类型断言**：`const OP_IS = "Is" as BasicFilterOperators; const OP_IN = "In" as BasicFilterOperators;`
+  （运行时仍是字符串）。对比 `AdvancedFilter` 的 `"And"` 类型宽松，无需断言。
+* **display 与 raw 必须分离**：列表项界面显示 `YYYY/M/D`，但筛选下发的是 Power BI 的**原始值**（保留 `raw`）。
+  若误把格式化后的显示字符串当筛选值，会匹配不到任何数据。切页恢复时同样把筛选值统一转成 display 后再比对，
+  以兼容筛选值是 Date 对象 / ISO 字符串 / 时间戳等多种形态。
+* **模式切换会清理另一模式的筛选**：`update()` 检测到 `lastMode` 变化即 `remove` 筛选并清空选中态/预设态，
+  避免介于（AdvancedFilter）与 Is/In（BasicFilter）两种语义冲突。
+* **capabilities 变更**：新增 `mode`（枚举 preset/list）与 `listBehavior`（showSearch / showSelectAll）两个对象；
+  `dataRoles[0].displayName` 改为「日期/文本字段」，但 **`name` 保持 `"Date"` 不变**——它是字段绑定的内部标识，
+  改名会导致已有报表的字段绑定失效。
+* **GUID 变更为 `DateRangeSlicer20260825008`**（capabilities 已变，不换 GUID 时 PBI 沿用内存旧实例），
+  displayName 改为「日期区间切片器 v2.6-双模式」便于在视觉对象面板中辨识。
+* **列表模式下的已知限制**：唯一值数量受 `dataReductionAlgorithm.top.count=30000` 限制；
+  列表区限高滚动沿用 v2.4.1 的 `positionPanel()`（视觉很矮时仍会退化为流内展开或向上翻转）。
+
 ## 2.5.1.0
 * **下拉面板宽度改为严格等于触发器宽度**：v2.5.0 用了 `width: max-content; min-width: 100%; max-width: 220px`
   这套组合（继承自 v2.4.2），其效果是面板宽度**脱离**触发器 —— 触发器窄于内容最小宽度时面板更宽，

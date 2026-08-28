@@ -1,14 +1,14 @@
 {
-		"version": "2.5.1.0",
+		"version": "2.6.0.0",
 		"author": {"name":"BI Delivery","email":"bi@example.com"},
 		"resources": [
 			{
 				"resourceId": "rId0",
 				"sourceType": 5,
-				"file": "resources/DateRangeSlicer20260825004.pbiviz.json"
+				"file": "resources/DateRangeSlicer20260825008.pbiviz.json"
 			}
 		],
-		"visual": {"name":"dateRangeSlicer","displayName":"日期区间切片器","guid":"DateRangeSlicer20260825004","visualClassName":"DateRangeSlicer","version":"2.5.1.0","description":"（v2.5.1）单层预设列表日期区间切片器：触发器显示当前预设名，点击展开浮层下拉面板，面板内为单列垂直列表（本月/上月/近7天/近15天/近30天），选中立即下发 AdvancedFilter 并收起。面板宽度严格等于触发器宽度，右边缘贴齐、浮在触发器正下方、带阴影与展开动画、空间不足自动翻转、限高内部滚动；标头与触发器固定贴视觉对象顶部。收起方式：点预设、再点触发器、Esc、点视觉内非交互空白区、或视觉对象失去焦点（点到报表画布其他位置）。注：本版本起面板内不再提供日期输入框，自定义区间功能移除（旧报表已保存的自定义区间仍正常显示与生效）。","supportUrl":"https://community.powerbi.com","gitHubUrl":"https://github.com/"},
+		"visual": {"name":"dateRangeSlicer","displayName":"日期区间切片器 v2.6-双模式","guid":"DateRangeSlicer20260825008","visualClassName":"DateRangeSlicer","version":"2.6.0.0","description":"（v2.6.0）双模式切片器，格式面板「切片器模式」切换：① 预设区间——单列列表（本月/上月/近7天/近15天/近30天），选中立即下发 AdvancedFilter 介于筛选；② 值列表——把拖入字段的唯一值列成可搜索的单列列表，支持多选，日期与文本字段均可，用 BasicFilter(Is/In) 下发，含「（全选）」项，降序排列（日期最新在前）。面板宽度严格等于触发器宽度，右边缘贴齐、浮在触发器正下方、带阴影与展开动画、空间不足自动翻转、限高内部滚动；标头与触发器固定贴视觉对象顶部。收起方式：点项、再点触发器、Esc、点视觉内非交互空白区、或视觉对象失去焦点。","supportUrl":"https://community.powerbi.com","gitHubUrl":"https://github.com/"},
 		"metadata": {
 			"pbivizjson": {
 				"resourceId": "rId0"

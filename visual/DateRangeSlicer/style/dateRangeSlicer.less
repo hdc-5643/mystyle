@@ -227,3 +227,86 @@
     background: rgba(55, 138, 221, 0.22);
 }
 
+/* ---------- 列表模式：搜索框 + 唯一值列表（多选） ---------- */
+.drs-search {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    width: 100%;
+    height: 28px;
+    margin-bottom: 6px;
+    padding: 0 8px;
+    color: var(--drs-list-fg, #FFFFFF);
+    font-family: "Segoe UI", sans-serif;
+    font-size: 12px;
+    background: var(--drs-bg, #142436);
+    border: var(--drs-border-width) solid var(--drs-border);
+    border-radius: var(--drs-radius);
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.drs-search::placeholder {
+    color: var(--drs-list-fg, #FFFFFF);
+    opacity: .45;
+}
+.drs-search:focus {
+    border-color: var(--drs-accent);
+    box-shadow: 0 0 0 1px var(--drs-accent) inset;
+}
+
+.drs-list {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    /* 列表区自己滚动，搜索框保持固定可见 */
+    min-height: 0;
+    overflow-y: auto;
+}
+.drs-list-item {
+    flex: 0 0 auto;
+    height: 28px;
+    padding: 0 10px;
+    color: var(--drs-list-fg, #FFFFFF);
+    font-size: 12px;
+    font-family: "Segoe UI", sans-serif;
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-radius: var(--drs-radius);
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.03);
+    transition: color .12s ease, background-color .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+.drs-list-item:hover {
+    color: var(--drs-list-hover-fg, #B4B2A9);
+    background: var(--drs-list-hover-bg, rgba(255, 255, 255, 0.05));
+}
+/* 选中态：与预设项一致的强调蓝描边 + 半透明底 */
+.drs-list-item.active {
+    background: rgba(55, 138, 221, 0.18);
+    color: var(--drs-accent);
+    font-weight: 600;
+    border: 1px solid var(--drs-accent);
+    box-shadow: 0 0 8px rgba(55, 138, 221, 0.25);
+}
+.drs-list-item.active:hover {
+    background: rgba(55, 138, 221, 0.22);
+}
+.drs-list-empty {
+    flex: 0 0 auto;
+    padding: 8px 10px;
+    color: var(--drs-list-fg, #FFFFFF);
+    opacity: .5;
+    font-size: 12px;
+    font-family: "Segoe UI", sans-serif;
+    text-align: center;
+}
+
+/* 列表模式下面板自身不滚动，改由 .drs-list 内部滚动，
+   这样搜索框固定在面板顶部不随列表滚走 */
+.drs-panel.drs-panel-list-mode {
+    overflow: hidden;
+}
+
