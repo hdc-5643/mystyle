@@ -140,7 +140,8 @@
     box-sizing: border-box;
     width: max-content;
     min-width: 100%;
-    max-width: 420px;
+    /* 单列列表不需要太宽：触发器很宽时也不把列表拉成宽带，保持列表观感 */
+    max-width: 220px;
     padding: 10px;
     background: var(--drs-list-bg, #0A1428);
     border: 1px solid var(--drs-border);
@@ -183,19 +184,20 @@
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
+/* 单列垂直列表：面板因此变得窄而高，视觉对象被调窄时也不易被挤压 */
 .drs-preset-grid {
     display: grid;
-    /* 92px 最小列宽：让 max-content 撑出合理面板宽度，预设文字不被压成两行 */
-    grid-template-columns: repeat(2, minmax(92px, 1fr));
-    gap: 8px;
+    /* 单列；100px 最小宽度保证「近 30 天」等文案不被压成两行 */
+    grid-template-columns: minmax(100px, 1fr);
+    gap: 6px;
 }
 .drs-preset {
-    height: 32px;
-    padding: 0 8px;
+    height: 30px;
+    padding: 0 10px;
     color: var(--drs-list-fg, #FFFFFF);
     font-size: 12px;
     font-family: "Segoe UI", sans-serif;
-    text-align: center;
+    text-align: left;
     cursor: pointer;
     white-space: nowrap;
     border-radius: var(--drs-radius);
@@ -217,47 +219,4 @@
 .drs-preset.active:hover {
     background: rgba(55, 138, 221, 0.22);
 }
-
-/* ---------- 第三层：原生日期输入（深色化，可弹系统日历） ---------- */
-.drs-date-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    /* 两个日期输入 + 分隔箭头的最小宽度，撑住面板不要被压扁 */
-    min-width: 212px;
-}
-.drs-date-input {
-    flex: 1 1 0;
-    min-width: 96px;
-    height: 30px;
-    box-sizing: border-box;
-    padding: 0 8px;
-    color: var(--drs-fg, #FFFFFF);
-    font-family: "Segoe UI", sans-serif;
-    font-size: 12px;
-    background: var(--drs-bg, #142436);
-    border: var(--drs-border-width) solid var(--drs-border);
-    border-radius: var(--drs-radius);
-    outline: none;
-    transition: border-color .15s ease, box-shadow .15s ease;
-}
-.drs-date-input:hover {
-    border-color: var(--drs-accent);
-}
-.drs-date-input:focus {
-    border-color: var(--drs-accent);
-    box-shadow: 0 0 0 1px var(--drs-accent) inset;
-}
-/* 原生日历图标反色，适配深蓝暗色 */
-.drs-date-input::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-    opacity: 0.85;
-    cursor: pointer;
-}
-.drs-date-sep {
-    flex: 0 0 auto;
-    color: var(--drs-border);
-    font-size: 12px;
-}
-
 

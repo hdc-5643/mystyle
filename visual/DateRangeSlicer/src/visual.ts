@@ -70,9 +70,12 @@ export class DateRangeSlicer implements IVisual {
     private arrowEl: HTMLElement;
     private panelEl: HTMLElement;
     private presetEls: HTMLElement[] = [];
-    private startInput: HTMLInputElement;
-    private endInput: HTMLInputElement;
     private isPanelOpen: boolean = false;
+    /**
+     * 旧报表里已保存的自定义区间（由 customRange 持久化对象恢复）。
+     * v2.5 起面板内不再提供日期输入框，无法再新建自定义区间；
+     * 保留此字段仅为兼容旧报表——触发器和筛选仍按该区间显示/生效，只是没有编辑入口。
+     */
     private customRange: { start: Date | null; end: Date | null } = { start: null, end: null };
     private docClickHandler: (e: MouseEvent) => void;
     private keyHandler: (e: KeyboardEvent) => void;
@@ -134,7 +137,7 @@ export class DateRangeSlicer implements IVisual {
         // 显隐交给 class（.drs-panel-open），不用内联 style，
         // 否则内联 display 会盖过 CSS 规则、导致展开动画与 flex gap 失效
 
-        // 预设按钮组（两列网格）
+        // 预设按钮组（单列垂直列表）
         const presetGrid = document.createElement("div");
         presetGrid.className = "drs-preset-grid";
         this.presetEls = [];
@@ -152,32 +155,6 @@ export class DateRangeSlicer implements IVisual {
             this.presetEls.push(btn);
         }
         this.panelEl.appendChild(presetGrid);
-
-        // 开始/结束原生日期输入（第三层：弹系统日历自定义）
-        const dateRow = document.createElement("div");
-        dateRow.className = "drs-date-row";
-
-        this.startInput = document.createElement("input");
-        this.startInput.type = "date";
-        this.startInput.className = "drs-date-input";
-        this.startInput.setAttribute("aria-label", "开始日期");
-
-        const dateSep = document.createElement("span");
-        dateSep.className = "drs-date-sep";
-        dateSep.textContent = "→";
-
-        this.endInput = document.createElement("input");
-        this.endInput.type = "date";
-        this.endInput.className = "drs-date-input";
-        this.endInput.setAttribute("aria-label", "结束日期");
-
-        dateRow.appendChild(this.startInput);
-        dateRow.appendChild(dateSep);
-        dateRow.appendChild(this.endInput);
-        this.panelEl.appendChild(dateRow);
-
-        this.startInput.addEventListener("change", () => this.onCustomDateChange());
-        this.endInput.addEventListener("change", () => this.onCustomDateChange());
 
         this.triggerEl.addEventListener("click", (e) => {
             e.stopPropagation();
@@ -289,12 +266,12 @@ export class DateRangeSlicer implements IVisual {
                         this.customRange = { start: null, end: null };
                         this.persistCurrentPreset(matched);
                     } else {
-                        this.currentPreset = ""; // 自定义态：无预设名，不高亮任何预设
+                        // 旧报表遗留的自定义区间：无预设名、不高亮任何预设，
+                        // 触发器显示区间文本（面板内已无编辑入口，但筛选与显示照旧生效）
+                        this.currentPreset = "";
                         this.customRange = cr;
                     }
-                    this.syncDateInputs(cr.start, cr.end);
                 }
-                this.ensureInputsFilled();
                 this.deriveTriggerLabel();
                 this.updatePresetHighlight();
                 this.isInitialized = true;
@@ -328,8 +305,6 @@ export class DateRangeSlicer implements IVisual {
             this.applyPresetFilter(this.currentPreset);
         }
 
-        // 输入框始终有值（无预设无自定义时回填数据边界），不出现原生占位符
-        this.ensureInputsFilled();
         this.lastFilterPresent = false;
     }
 
@@ -696,10 +671,8 @@ export class DateRangeSlicer implements IVisual {
         if (!range) {
             return;
         }
-        // 选预设＝选定两个日期输入框：把预设对应的起止日期回填进输入框。
-        // 输入框始终有值，因此不会出现原生 yyyy/m/d 占位符。
+        // 选预设即清掉旧报表遗留的自定义区间
         this.customRange = { start: null, end: null };
-        this.syncDateInputs(range.start, range.end);
 
         // 开始日期：本地时区午夜，GreaterThanOrEqual
         const startDate = new Date(range.start.getFullYear(), range.start.getMonth(), range.start.getDate());
@@ -724,86 +697,6 @@ export class DateRangeSlicer implements IVisual {
         this.deriveTriggerLabel();
         this.updatePresetHighlight();
         this.isInitialized = true;
-    }
-
-    /** 自定义区间：直接套 customRange 下发 AdvancedFilter（选完结束日期后立即下发） */
-    private applyCustomFilter(start: Date, end: Date): void {
-        if (!this.target.table || !this.target.column) {
-            return;
-        }
-        const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-        const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate() + 1);
-        const conditions: any[] = [
-            { operator: "GreaterThanOrEqual", value: startDate.toJSON() },
-            { operator: "LessThan", value: endDate.toJSON() }
-        ];
-        const filter = new AdvancedFilter(this.target, "And", ...conditions);
-        this.labelEl.title = `target=${this.target.table}.${this.target.column}\ncustom\n${JSON.stringify(conditions)}`;
-        this.host.applyJsonFilter(filter, "general", "filter", FilterAction.merge);
-        this.currentPreset = ""; // 自定义态：无预设名
-        this.deriveTriggerLabel();
-        this.updatePresetHighlight();
-        this.isInitialized = true;
-        this.persistCustomRange(start, end);
-    }
-
-    /** 原生 date change：填 customRange 并下发（做空值/顺序校验） */
-    private onCustomDateChange(): void {
-        const s = this.parseDate(this.startInput.value);
-        const e = this.parseDate(this.endInput.value);
-        if (!s || !e) {
-            return; // 两个都填了才下发，避免半区间非法
-        }
-        let start = s;
-        let end = e;
-        if (end < start) {
-            // 结束早于开始：交换，并回填输入框保持视觉一致
-            const t = start; start = end; end = t;
-            this.syncDateInputs(start, end);
-        }
-        // 关键联动：自定义日期若恰好等于某个预设，即视为选中该预设
-        // （预设高亮 + 触发器显示预设名 + 清空自定义态），而不是停在自定义态
-        const matched = this.exactMatchPreset(start, end);
-        if (matched) {
-            this.selectPreset(matched);
-            return;
-        }
-        this.customRange = { start, end };
-        this.applyCustomFilter(start, end);
-    }
-
-    /** 同步原生 date 输入框值（Date|null → yyyy-mm-dd） */
-    private syncDateInputs(start: Date | null, end: Date | null): void {
-        const fmt = (d: Date | null) => {
-            if (!d) { return ""; }
-            const m = String(d.getMonth() + 1).padStart(2, "0");
-            const day = String(d.getDate()).padStart(2, "0");
-            return `${d.getFullYear()}-${m}-${day}`;
-        };
-        if (this.startInput) { this.startInput.value = fmt(start); }
-        if (this.endInput) { this.endInput.value = fmt(end); }
-    }
-
-    /**
-     * 保证两个日期输入框始终有值，永不出现原生 yyyy/m/d 占位符。
-     * 优先级：已有值不动 → 自定义区间 → 当前预设区间 → 数据边界（全量态）。
-     */
-    private ensureInputsFilled(): void {
-        if (this.startInput && this.endInput && this.startInput.value && this.endInput.value) {
-            return;
-        }
-        if (this.customRange.start && this.customRange.end) {
-            this.syncDateInputs(this.customRange.start, this.customRange.end);
-            return;
-        }
-        const r = this.computePresetRange(this.currentPreset);
-        if (r) {
-            this.syncDateInputs(r.start, r.end);
-            return;
-        }
-        if (this.rangeMin && this.rangeMax) {
-            this.syncDateInputs(this.rangeMin, this.rangeMax);
-        }
     }
 
     /**
@@ -909,21 +802,15 @@ export class DateRangeSlicer implements IVisual {
 
     /**
      * 交互白名单：命中则保持面板展开，其余一切区域视为空白、点击即收起。
-     * 白名单＝触发器 + 5 个预设按钮 + 开始/结束日期输入框（含其内部节点，如日历图标）。
+     * 白名单＝触发器 + 5 个预设按钮。
      * 用白名单而非「是否在面板内」的黑名单，是为了满足「除交互元素外一律收起」的最严格判定：
-     * 面板内的 padding 空白、分隔箭头、标头文字等装饰性区域都不豁免。
+     * 面板内的 padding 空白、标头文字等装饰性区域都不豁免。
      */
     private isInteractiveTarget(target: Node): boolean {
         if (!target) {
             return false;
         }
         if (this.triggerEl.contains(target)) {
-            return true;
-        }
-        if (this.startInput && this.startInput.contains(target)) {
-            return true;
-        }
-        if (this.endInput && this.endInput.contains(target)) {
             return true;
         }
         for (const el of this.presetEls) {
@@ -936,10 +823,11 @@ export class DateRangeSlicer implements IVisual {
 
     /**
      * 失焦判定（blur 后延后一个宏任务执行）：
-     * 1. iframe 仍持有焦点 → 说明用户还在本视觉内操作（如焦点在视觉内移动、原生日历打开），保持展开
-     * 2. 焦点已离开 iframe，但当前 activeElement 是日期输入框 → 系统日历正处于打开/选日期状态，
-     *    保持展开，避免打断用户选日期（明确要求：日历逻辑不变）
-     * 3. 其余情况（用户点到 PBI 画布任意其他位置）→ 收起
+     * 1. iframe 仍持有焦点 → 说明用户还在本视觉内操作，保持展开
+     * 2. 其余情况（用户点到 PBI 画布任意其他位置）→ 收起
+     *
+     * 注：v2.4.x 曾在此豁免「焦点位于日期输入框」以保护系统日历，
+     * v2.5 移除日期输入框后该分支已无意义，一并删除。
      */
     private evaluateBlurClose(): void {
         this.blurTimer = null;
@@ -947,10 +835,6 @@ export class DateRangeSlicer implements IVisual {
             return;
         }
         if (document.hasFocus && document.hasFocus()) {
-            return;
-        }
-        const active = document.activeElement;
-        if (active && (active === this.startInput || active === this.endInput)) {
             return;
         }
         this.closePanel();
@@ -1048,32 +932,6 @@ export class DateRangeSlicer implements IVisual {
         }
     }
 
-    /**
-     * 持久化自定义区间（customStart/customEnd ISO 文本），并清掉预设名。
-     * 注意：currentPreset 属于 state 对象，必须单独写 state，
-     * 写在 customRange 下（capabilities 未声明该属性）会被丢弃。
-     */
-    private persistCustomRange(start: Date, end: Date): void {
-        this.lastPersistedPreset = "";
-        try {
-            this.host.persistProperties({
-                merge: [
-                    { objectName: "state", selector: null, properties: { currentPreset: "" } },
-                    {
-                        objectName: "customRange",
-                        selector: null,
-                        properties: {
-                            customStart: this.toJSONLocal(start),
-                            customEnd: this.toJSONLocal(end)
-                        }
-                    }
-                ]
-            });
-        } catch (e) {
-            /* ignore */
-        }
-    }
-
     private toJSONLocal(d: Date): string {
         // 本地时区序列化，与 applyPresetFilter 中 toJSON() 一致
         return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toJSON();
@@ -1144,7 +1002,6 @@ export class DateRangeSlicer implements IVisual {
             const ed = this.parseDate(ce);
             if (sd && ed) {
                 this.customRange = { start: sd, end: ed };
-                this.syncDateInputs(sd, ed);
             }
         } else {
             this.customRange = { start: null, end: null };

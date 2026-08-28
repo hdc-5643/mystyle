@@ -1,3 +1,27 @@
+## 2.5.0.0
+* **下拉面板改为「单列垂直列表」，移除日期输入框**：面板内容从此只有 5 个预设（本月 / 上月 / 近7天 / 近15天 / 近30天），
+  按**单列 N 行**纵向排列；开始/结束两个原生日期输入框从面板中删除。**预设选项本身不变**。
+  * **动机**：原 2 列网格 + 一行日期输入框使面板偏宽，视觉对象被调窄时内部日期输入框会被挤压变形。
+    改为单列后面板变窄，更贴合「下拉列表」观感，也更不容易被挤坏。
+  * 样式：`.drs-preset-grid` 由 `repeat(2, minmax(92px,1fr))` 改为 `minmax(100px, 1fr)`；
+    行高 32→30px、间距 8→6px、内边距 `0 8px`→`0 10px`、对齐由 `center` 改 `left`（列表观感）；
+    `.drs-panel` 的 `max-width` 由 420px 收紧到 **220px**，避免触发器很宽时把列表拉成宽带。
+  * 移除 `.drs-date-row` / `.drs-date-input` / `.drs-date-sep` 全部样式。
+* **JS 净减约 140 行**：随日期输入框一并移除的方法 —— `onCustomDateChange()`（原生 date change 联动）、
+  `syncDateInputs()`（回填输入框）、`ensureInputsFilled()`（防占位符兜底）、
+  `applyCustomFilter()`（自定义区间下发）、`persistCustomRange()`（自定义区间持久化），
+  以及成员字段 `startInput` / `endInput`。
+* **清理因移除输入框而失效的两处分支**：
+  * `isInteractiveTarget()` 白名单去掉两个日期输入框分支（白名单现为：触发器 + 5 个预设按钮）。
+  * `evaluateBlurClose()` 去掉「`activeElement` 是日期输入框则豁免失焦回收」分支 ——
+    该分支是 v2.4.3 为保护系统日历而加，输入框移除后已成死代码。
+* **保留 `customRange` 以兼容旧报表（重要）**：自定义区间**无法再新建**，但旧报表中已保存的自定义区间
+  仍会通过 `reverseCustomRange()` + `exactMatchPreset()` 正常恢复：命中预设则显示预设名，
+  未命中则触发器显示「M月D日 - M月D日」区间文本、预设不高亮，**筛选照旧生效，只是没有编辑入口**。
+  `capabilities.json` 的 `customRange` 对象保留（仅读不写），故**未改动 capabilities，GUID 不变**（`DateRangeSlicer20260825004`）。
+* 未改动的既有能力：标头与触发器贴顶（v2.4.4）、面板右对齐触发器与自动翻转/限高滚动/极矮兜底（v2.4.1）、
+  视觉内非交互空白点击即收起与 iframe 失焦回收（v2.4.3）、`AdvancedFilter` 下发链路。
+
 ## 2.4.4.0
 * **「标头 + 触发器」固定贴视觉对象顶部**：视觉对象被拉高时，内容行不再垂直居中、不再在顶部留大片空白。两种标头布局（顶部 / 左侧）均已贴顶。本次**仅改 LESS，JS 逻辑零改动**。
   * **修复左侧布局的垂直居中（用户反馈的截图问题）**：`.drs-layout-left` 是 `flex-direction: row`，主轴水平，此时 `align-items: center` 作用于**交叉轴（垂直）**，把高度仅 30px 的 `.drs-body` 垂直居中 → 上下各留空白。改为 `align-items: flex-start` 后整行贴顶。
