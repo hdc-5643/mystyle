@@ -1,3 +1,8 @@
+## 2.8.0.3
+* **触发器新增「文字大小」配置项**：格式面板「下拉样式 → 触发器」组新增「文字大小」numUpDown（默认 12px，范围 8-24）。经 `capabilities.selection.triggerFontSize` → `DEFAULTS` → `readSettings`（`clamp(...,8,24,...)`）→ `applyStyles` 写入 CSS 变量 `--drs-trigger-fs` → LESS `.drs-trigger { font-size: var(--drs-trigger-fs, 12px) }` 链路驱动。此前触发器字号写死 12px 不可调。
+* **隐藏滚动条两端箭头按钮**：新增 `.drs-panel/ .drs-list/ .drs-panel-inline::-webkit-scrollbar-button { display: none; }`，去掉原生滚动条两端的 <> 方向标（仅 Webkit 有效，部分 Windows 主题下仍可能显示）。
+* **列表项左对齐保留勾选框间距**：行间距默认 2px 不变（用户确认不动），checkbox 左 28px 留位保留。
+
 ## 2.8.0.2
 * **修复严重布局 bug：列表模式被渲染成多列**。根因是 `applyStyles()` 中 `this.listEl.style.display = isList ? "block" : "none"` 把 `.drs-list` 的内联 `display` 强行覆盖为 `block`，导致 CSS 中 `display:flex; flex-direction:column` 完全失效；`<button>` 列表项按默认 inline-block 流式排列，于是出现两列。修复为 `this.listEl.style.display = isList ? "" : "none"`——空字符串移除内联覆盖，恢复 CSS 的 flex 单列布局。
 

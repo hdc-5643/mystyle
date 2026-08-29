@@ -96,7 +96,7 @@
     border-radius: var(--drs-radius);
     color: var(--drs-fg);
     font-family: "Segoe UI", sans-serif;
-    font-size: 12px;
+    font-size: var(--drs-trigger-fs, 12px);
     cursor: pointer;
     outline: none;
     user-select: none;
@@ -381,6 +381,14 @@
 .drs-list::-webkit-scrollbar-thumb:hover,
 .drs-panel.drs-panel-inline::-webkit-scrollbar-thumb:hover {
     background: var(--drs-accent);                       /* hover 时改用强调色，提供反馈 */
+}
+/* 隐藏滚动条两端的箭头按钮（原生 <> 方向标）：Webkit 专属，部分 Windows 主题下仍可能显示 */
+.drs-panel::-webkit-scrollbar-button,
+.drs-list::-webkit-scrollbar-button,
+.drs-panel.drs-panel-inline::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
 }
 
 /* 列表模式下面板自身不滚动，改由 .drs-list 内部滚动，

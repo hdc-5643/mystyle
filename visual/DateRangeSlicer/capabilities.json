@@ -246,6 +246,12 @@
                         }
                     }
                 },
+                "triggerFontSize": {
+                    "displayName": "触发器文字大小",
+                    "type": {
+                        "numeric": true
+                    }
+                },
                 "listActiveText": {
                     "displayName": "选中态文字色",
                     "type": {

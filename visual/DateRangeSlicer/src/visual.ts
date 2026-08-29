@@ -73,6 +73,8 @@ const DEFAULTS = {
         listHoverBackground: "transparent",
         // 触发器文字色：独立控制，不再复用强调色
         triggerTextColor: "#FFFFFF",
+        // 触发器文字大小（px）：独立控制，默认 12
+        triggerFontSize: 12,
         // 选中态颜色：独立控制，不再硬编码
         listActiveText: "#378ADD",
         listActiveBackground: "rgba(55, 138, 221, 0.18)",
@@ -524,6 +526,11 @@ export class DateRangeSlicer implements IVisual {
                             displayName: "文字色（独立于强调色）",
                             uid: "drs-selection-triggertext-picker",
                             control: colorPicker("selection", "triggerTextColor", selection.triggerTextColor)
+                        },
+                        {
+                            displayName: "文字大小",
+                            uid: "drs-selection-trigger-fs-input",
+                            control: numUpDown("selection", "triggerFontSize", selection.triggerFontSize, 8, 24)
                         },
                         {
                             displayName: "边框颜色",
@@ -1390,6 +1397,7 @@ export class DateRangeSlicer implements IVisual {
         this.settings.selection.listHoverText = color(s.listHoverText, DEFAULTS.selection.listHoverText);
         this.settings.selection.listHoverBackground = color(s.listHoverBackground, DEFAULTS.selection.listHoverBackground);
         this.settings.selection.triggerTextColor = color(s.triggerTextColor, DEFAULTS.selection.triggerTextColor);
+        this.settings.selection.triggerFontSize = clamp(s.triggerFontSize, 8, 24, DEFAULTS.selection.triggerFontSize);
         this.settings.selection.listActiveText = color(s.listActiveText, DEFAULTS.selection.listActiveText);
         this.settings.selection.listActiveBackground = color(s.listActiveBackground, DEFAULTS.selection.listActiveBackground);
         this.settings.selection.scrollbarTrackColor = color(s.scrollbarTrackColor, DEFAULTS.selection.scrollbarTrackColor);
@@ -1464,6 +1472,7 @@ export class DateRangeSlicer implements IVisual {
         // ⚠️ 修正：--drs-fg 原先被绑成 accentColor（强调色），导致改强调色会把
         // 触发器文字也变色。现独立为 triggerTextColor。
         this.root.style.setProperty("--drs-fg", s.triggerTextColor);
+        this.root.style.setProperty("--drs-trigger-fs", `${s.triggerFontSize}px`);
         this.root.style.setProperty("--drs-border", s.borderColor);
         this.root.style.setProperty("--drs-accent", s.accentColor);
         this.root.style.setProperty("--drs-radius", `${s.borderRadius}px`);
