@@ -70,7 +70,15 @@ const DEFAULTS = {
         listBackground: "#0A1428",
         listText: "#FFFFFF",
         listHoverText: "#B4B2A9",
-        listHoverBackground: "transparent"
+        listHoverBackground: "transparent",
+        // 触发器文字色：独立控制，不再复用强调色
+        triggerTextColor: "#FFFFFF",
+        // 选中态颜色：独立控制，不再硬编码
+        listActiveText: "#378ADD",
+        listActiveBackground: "rgba(55, 138, 221, 0.18)",
+        // 滚动条暗色配色（贴近原生切片器观感）
+        scrollbarTrackColor: "#0A1428",
+        scrollbarThumbColor: "#2C4A6B"
     },
     // 「默认本月」：首次加载（且无已保存筛选）时自动将区间套为最新日期所在月（月首日→最新日期，MTD），随数据刷新自动跟进
     defaultThisMonth: true,
@@ -501,14 +509,19 @@ export class DateRangeSlicer implements IVisual {
             uid: "drs-selection-card",
             groups: [
                 {
-                    displayName: "外观",
-                    uid: "drs-selection-options-group",
+                    displayName: "触发器",
+                    uid: "drs-selection-trigger-group",
                     collapsible: true,
                     slices: [
                         {
                             displayName: "背景色",
                             uid: "drs-selection-bg-picker",
                             control: colorPicker("selection", "backgroundColor", selection.backgroundColor)
+                        },
+                        {
+                            displayName: "文字色（独立于强调色）",
+                            uid: "drs-selection-triggertext-picker",
+                            control: colorPicker("selection", "triggerTextColor", selection.triggerTextColor)
                         },
                         {
                             displayName: "边框颜色",
@@ -524,12 +537,14 @@ export class DateRangeSlicer implements IVisual {
                             displayName: "圆角",
                             uid: "drs-selection-radius-input",
                             control: numUpDown("selection", "borderRadius", selection.borderRadius, 0, 10)
-                        },
-                        {
-                            displayName: "强调色",
-                            uid: "drs-selection-accent-picker",
-                            control: colorPicker("selection", "accentColor", selection.accentColor)
-                        },
+                        }
+                    ]
+                },
+                {
+                    displayName: "面板",
+                    uid: "drs-selection-panel-group",
+                    collapsible: true,
+                    slices: [
                         {
                             displayName: "下拉面板背景色",
                             uid: "drs-selection-listbg-picker",
@@ -539,9 +554,21 @@ export class DateRangeSlicer implements IVisual {
                             displayName: "下拉面板文字色",
                             uid: "drs-selection-listtext-picker",
                             control: colorPicker("selection", "listText", selection.listText)
+                        }
+                    ]
+                },
+                {
+                    displayName: "列表项",
+                    uid: "drs-selection-listitem-group",
+                    collapsible: true,
+                    slices: [
+                        {
+                            displayName: "强调色（选中边框）",
+                            uid: "drs-selection-accent-picker",
+                            control: colorPicker("selection", "accentColor", selection.accentColor)
                         },
                         {
-                            displayName: "悬浮文字色（只变字、不动背景）",
+                            displayName: "悬浮文字色",
                             uid: "drs-selection-listhovertext-picker",
                             control: colorPicker("selection", "listHoverText", selection.listHoverText)
                         },
@@ -549,6 +576,33 @@ export class DateRangeSlicer implements IVisual {
                             displayName: "悬浮背景色（默认透明=不变灰）",
                             uid: "drs-selection-listhoverbg-picker",
                             control: colorPicker("selection", "listHoverBackground", selection.listHoverBackground)
+                        },
+                        {
+                            displayName: "选中态文字色",
+                            uid: "drs-selection-listactive-fg-picker",
+                            control: colorPicker("selection", "listActiveText", selection.listActiveText)
+                        },
+                        {
+                            displayName: "选中态背景色",
+                            uid: "drs-selection-listactive-bg-picker",
+                            control: colorPicker("selection", "listActiveBackground", selection.listActiveBackground)
+                        }
+                    ]
+                },
+                {
+                    displayName: "滚动条",
+                    uid: "drs-selection-scrollbar-group",
+                    collapsible: true,
+                    slices: [
+                        {
+                            displayName: "轨道色",
+                            uid: "drs-selection-scrollbar-track-picker",
+                            control: colorPicker("selection", "scrollbarTrackColor", selection.scrollbarTrackColor)
+                        },
+                        {
+                            displayName: "滑块色",
+                            uid: "drs-selection-scrollbar-thumb-picker",
+                            control: colorPicker("selection", "scrollbarThumbColor", selection.scrollbarThumbColor)
                         }
                     ]
                 }
@@ -1328,6 +1382,11 @@ export class DateRangeSlicer implements IVisual {
         this.settings.selection.listText = color(s.listText, DEFAULTS.selection.listText);
         this.settings.selection.listHoverText = color(s.listHoverText, DEFAULTS.selection.listHoverText);
         this.settings.selection.listHoverBackground = color(s.listHoverBackground, DEFAULTS.selection.listHoverBackground);
+        this.settings.selection.triggerTextColor = color(s.triggerTextColor, DEFAULTS.selection.triggerTextColor);
+        this.settings.selection.listActiveText = color(s.listActiveText, DEFAULTS.selection.listActiveText);
+        this.settings.selection.listActiveBackground = color(s.listActiveBackground, DEFAULTS.selection.listActiveBackground);
+        this.settings.selection.scrollbarTrackColor = color(s.scrollbarTrackColor, DEFAULTS.selection.scrollbarTrackColor);
+        this.settings.selection.scrollbarThumbColor = color(s.scrollbarThumbColor, DEFAULTS.selection.scrollbarThumbColor);
 
         const db = objs.defaultBehavior || {};
         this.settings.defaultThisMonth = bool(db.defaultThisMonth, DEFAULTS.defaultThisMonth);
@@ -1391,7 +1450,9 @@ export class DateRangeSlicer implements IVisual {
 
         // 原生下拉样式变量（CSS 通过 var() 应用到 select）
         this.root.style.setProperty("--drs-bg", s.backgroundColor);
-        this.root.style.setProperty("--drs-fg", s.accentColor);
+        // ⚠️ 修正：--drs-fg 原先被绑成 accentColor（强调色），导致改强调色会把
+        // 触发器文字也变色。现独立为 triggerTextColor。
+        this.root.style.setProperty("--drs-fg", s.triggerTextColor);
         this.root.style.setProperty("--drs-border", s.borderColor);
         this.root.style.setProperty("--drs-accent", s.accentColor);
         this.root.style.setProperty("--drs-radius", `${s.borderRadius}px`);
@@ -1400,5 +1461,11 @@ export class DateRangeSlicer implements IVisual {
         this.root.style.setProperty("--drs-list-fg", s.listText);
         this.root.style.setProperty("--drs-list-hover-fg", s.listHoverText);
         this.root.style.setProperty("--drs-list-hover-bg", s.listHoverBackground);
+        // 选中态（预设/列表项）：独立可配，不再硬编码半透明蓝
+        this.root.style.setProperty("--drs-list-active-fg", s.listActiveText);
+        this.root.style.setProperty("--drs-list-active-bg", s.listActiveBackground);
+        // 滚动条暗色配色
+        this.root.style.setProperty("--drs-scrollbar-track", s.scrollbarTrackColor);
+        this.root.style.setProperty("--drs-scrollbar-thumb", s.scrollbarThumbColor);
     }
 }

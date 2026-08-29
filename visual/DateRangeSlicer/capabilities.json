@@ -235,6 +235,56 @@
                             }
                         }
                     }
+                },
+                "triggerTextColor": {
+                    "displayName": "触发器文字色（独立于强调色）",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "listActiveText": {
+                    "displayName": "选中态文字色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "listActiveBackground": {
+                    "displayName": "选中态背景色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "scrollbarTrackColor": {
+                    "displayName": "滚动条轨道色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "scrollbarThumbColor": {
+                    "displayName": "滚动条滑块色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
                 }
             }
         },

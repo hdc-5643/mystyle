@@ -150,7 +150,7 @@
     background: var(--drs-list-bg, #0A1428);
     border: 1px solid var(--drs-border);
     border-radius: var(--drs-radius);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
+    /* 用户明确不要阴影：去掉 box-shadow，依赖边框区分面板层次 */
     overflow-x: hidden;
     overflow-y: auto;
     flex-direction: column;
@@ -217,14 +217,13 @@
     background: var(--drs-list-hover-bg, rgba(255, 255, 255, 0.05));
 }
 .drs-preset.active {
-    background: rgba(55, 138, 221, 0.18);
-    color: var(--drs-accent);
+    background: var(--drs-list-active-bg, rgba(55, 138, 221, 0.18));
+    color: var(--drs-list-active-fg, #378ADD);
     font-weight: 600;
     border: 1px solid var(--drs-accent);
-    box-shadow: 0 0 8px rgba(55, 138, 221, 0.25);
 }
 .drs-preset.active:hover {
-    background: rgba(55, 138, 221, 0.22);
+    background: var(--drs-list-active-bg, rgba(55, 138, 221, 0.18));
 }
 
 /* ---------- 列表模式：搜索框 + 唯一值列表（多选） ---------- */
@@ -285,14 +284,13 @@
 }
 /* 选中态：与预设项一致的强调蓝描边 + 半透明底 */
 .drs-list-item.active {
-    background: rgba(55, 138, 221, 0.18);
-    color: var(--drs-accent);
+    background: var(--drs-list-active-bg, rgba(55, 138, 221, 0.18));
+    color: var(--drs-list-active-fg, #378ADD);
     font-weight: 600;
     border: 1px solid var(--drs-accent);
-    box-shadow: 0 0 8px rgba(55, 138, 221, 0.25);
 }
 .drs-list-item.active:hover {
-    background: rgba(55, 138, 221, 0.22);
+    background: var(--drs-list-active-bg, rgba(55, 138, 221, 0.18));
 }
 .drs-list-empty {
     flex: 0 0 auto;
@@ -302,6 +300,39 @@
     font-size: 12px;
     font-family: "Segoe UI", sans-serif;
     text-align: center;
+}
+
+/* ---------- 暗色滚动条（贴近原生切片器观感，颜色可配置） ---------- */
+/* 应用于所有可滚动容器：浮层面板、列表区、极矮兜底模式 */
+.drs-panel,
+.drs-list,
+.drs-panel.drs-panel-inline {
+    scrollbar-width: thin;                              /* Firefox 细滚动条 */
+    scrollbar-color: var(--drs-scrollbar-thumb, #2C4A6B) var(--drs-scrollbar-track, #0A1428);
+}
+.drs-panel::-webkit-scrollbar,
+.drs-list::-webkit-scrollbar,
+.drs-panel.drs-panel-inline::-webkit-scrollbar {
+    width: 8px;                                         /* 窄，不抢内容焦点 */
+    height: 8px;
+}
+.drs-panel::-webkit-scrollbar-track,
+.drs-list::-webkit-scrollbar-track,
+.drs-panel.drs-panel-inline::-webkit-scrollbar-track {
+    background: var(--drs-scrollbar-track, #0A1428);    /* 与面板同色，融于一体 */
+    border-radius: 4px;
+}
+.drs-panel::-webkit-scrollbar-thumb,
+.drs-list::-webkit-scrollbar-thumb,
+.drs-panel.drs-panel-inline::-webkit-scrollbar-thumb {
+    background: var(--drs-scrollbar-thumb, #2C4A6B);     /* 比轨道亮一档，可辨识 */
+    border-radius: 4px;
+    border: 2px solid var(--drs-scrollbar-track, #0A1428);  /* 留白，避免贴边 */
+}
+.drs-panel::-webkit-scrollbar-thumb:hover,
+.drs-list::-webkit-scrollbar-thumb:hover,
+.drs-panel.drs-panel-inline::-webkit-scrollbar-thumb:hover {
+    background: var(--drs-accent);                       /* hover 时改用强调色，提供反馈 */
 }
 
 /* 列表模式下面板自身不滚动，改由 .drs-list 内部滚动，

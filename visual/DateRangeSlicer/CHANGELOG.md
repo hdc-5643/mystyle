@@ -1,3 +1,13 @@
+## 2.7.0.0
+* **样式配置增强（格式面板「下拉样式」卡片，14 项按 4 组重排）**。
+* **修复：触发器文字色独立于强调色**（v2.6 遗留 bug）。原 `--drs-fg` 被 `applyStyles()` 绑成 `s.accentColor`，\n  改「强调色」会把触发器文字一并变色。现新增 `triggerTextColor`（默认 `#FFFFFF`），`--drs-fg` 改绑它。\n  强调色（`--drs-accent`）仅用于选中态边框与滚动条 hover，不再影响触发器文字。
+* **选中态颜色独立可配**：原选中态背景 `rgba(55,138,221,0.18)` 与文字 `var(--drs-accent)` 硬编码，\n  现新增 `listActiveBackground`（默认半透明蓝）、`listActiveText`（默认 `#378ADD`），对应 CSS 变量\n  `--drs-list-active-bg` / `--drs-list-active-fg`，LESS 中 `.drs-preset.active` 与 `.drs-list-item.active` 改用之。
+* **移除阴影**（用户明确不要）：删除 `.drs-panel` 的 `box-shadow: 0 8px 24px rgba(0,0,0,.45)`\n  与 `.drs-preset.active` / `.drs-list-item.active` 的发光 `box-shadow: 0 0 8px rgba(55,138,221,.25)`。\n  面板层次改由 `1px solid var(--drs-border)` 边框区分（触发器自身的聚焦内描边 `box-shadow: 0 0 0 1px inset` 保留，属交互反馈）。
+* **暗色滚动条（贴边、窄、颜色可配）**：新增 `::-webkit-scrollbar` 系列样式（轨道/滑块 8px 宽、圆角、留白边框），\n  应用于 `.drs-panel` / `.drs-list` / `.drs-panel-inline` 三个可滚动区；Firefox 用 `scrollbar-width: thin` + `scrollbar-color`。\n  新增 `scrollbarTrackColor`（默认 `#0A1428`，与面板同色融为一体）、`scrollbarThumbColor`（默认 `#2C4A6B`，比轨道亮一档），\n  hover 时滑块变 `--drs-accent`。默认参数即贴近原生切片器观感，解决深色面板里浏览器默认浅色粗滚动条过突出的问题。
+* **格式面板分组**：「下拉样式」卡片从单组 9 项改为「触发器 / 面板 / 列表项 / 滚动条」4 组。\n  触发器组：背景色、文字色（新）、边框色、边框粗细、圆角；面板组：面板背景、面板文字；\n  列表项组：强调色、悬浮文字、悬浮背景、选中文字（新）、选中背景（新）；滚动条组：轨道色（新）、滑块色（新）。
+* **capabilities 变更 → 换 GUID**：`selection` 对象新增 `triggerTextColor` / `listActiveText` / `listActiveBackground` /\n  `scrollbarTrackColor` / `scrollbarThumbColor` 共 5 个属性。GUID `DateRangeSlicer20260825008` → `DateRangeSlicer20260825009`，\n  displayName 改为「日期区间切片器 v2.7-样式配置增强」。旧视觉实例需重新导入。
+* 构建验证：解包产物确认 5 个新属性、4 个新 CSS 变量、`--drs-fg` 已解耦、滚动条伪元素存在、两处阴影已移除。
+
 ## 2.6.0.0
 * **新增「列表模式」：字段唯一值下拉多选（日期与文本字段均支持）**。格式面板「切片器模式」卡片可在两种模式间切换：
   * **预设区间**（默认，既有一切行为不变）：单列 5 个预设，走 `AdvancedFilter`（GreaterThanOrEqual + LessThan）介于筛选。
