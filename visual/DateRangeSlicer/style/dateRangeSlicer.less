@@ -293,10 +293,12 @@
     color: var(--drs-list-fg, #FFFFFF);
     font-family: "Segoe UI", sans-serif;
     font-size: var(--drs-search-fs, 11px);
-    /* 极简下划线风格：背景透明、无边框、仅底部 1px 下划线（颜色/显隐独立可配） */
+    /* 极简下划线风格：背景透明、仅底部 1px 下划线，其余三边显式归零 */
     background: var(--drs-search-bg, transparent);
-    border: none;
+    border-top: none;
+    border-right: none;
     border-bottom: var(--drs-search-underline-on, 1px) solid var(--drs-search-underline, #2C4A6B);
+    border-left: none;
     border-radius: 0;
     outline: none;
     transition: border-color .15s ease, box-shadow .15s ease;
@@ -306,7 +308,10 @@
     opacity: 1;
 }
 .drs-search:focus {
+    border-top: none;
+    border-right: none;
     border-bottom-color: var(--drs-accent);
+    border-left: none;
     box-shadow: 0 1px 0 0 var(--drs-accent) inset;
 }
 
@@ -412,7 +417,7 @@
 .drs-list,
 .drs-panel.drs-panel-inline {
     scrollbar-width: thin;                              /* Firefox 细滚动条 */
-    scrollbar-color: var(--drs-scrollbar-thumb, #2C4A6B) var(--drs-scrollbar-track, #0A1428);
+    scrollbar-color: var(--drs-scrollbar-thumb, #2C4A6B) var(--drs-scrollbar-track, #193653);
 }
 .drs-panel::-webkit-scrollbar,
 .drs-list::-webkit-scrollbar,
@@ -423,7 +428,7 @@
 .drs-panel::-webkit-scrollbar-track,
 .drs-list::-webkit-scrollbar-track,
 .drs-panel.drs-panel-inline::-webkit-scrollbar-track {
-    background: var(--drs-scrollbar-track, #0A1428);    /* 与面板同色，融于一体 */
+    background: var(--drs-scrollbar-track, #193653);    /* 与面板背景统一 */
     border-radius: 4px;
 }
 .drs-panel::-webkit-scrollbar-thumb,
@@ -431,7 +436,7 @@
 .drs-panel.drs-panel-inline::-webkit-scrollbar-thumb {
     background: var(--drs-scrollbar-thumb, #2C4A6B);     /* 比轨道亮一档，可辨识 */
     border-radius: 4px;
-    border: 2px solid var(--drs-scrollbar-track, #0A1428);  /* 留白，避免贴边 */
+    border: 2px solid var(--drs-scrollbar-track, #193653);  /* 与轨道色一致，留白避免贴边 */
 }
 .drs-panel::-webkit-scrollbar-thumb:hover,
 .drs-list::-webkit-scrollbar-thumb:hover,

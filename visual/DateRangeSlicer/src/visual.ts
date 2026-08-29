@@ -97,7 +97,7 @@ const DEFAULTS = {
         checkSize: 14,                      // 勾选框尺寸（px）
         checkRadius: 2,                     // 勾选框圆角（px）
         // —— 滚动条（仅保留轨道色/滑块色，宽度固定 8px、箭头默认隐藏）——
-        scrollbarTrackColor: "#0A1428",     // 轨道色
+        scrollbarTrackColor: "#193653",     // 轨道色（与面板背景统一）
         scrollbarThumbColor: "#2C4A6B",     // 滑块色
         // —— 标头 ——
         headerGap: 4,                       // 标头与输入框间距（px）

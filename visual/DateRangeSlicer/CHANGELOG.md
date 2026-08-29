@@ -1,3 +1,8 @@
+## 2.11.1.0
+* **搜索框顶部横线隐藏**：`.drs-search` 由 `border: none; border-bottom: ...` 改为显式 `border-top/right/left: none`（focus 态同步），彻底去掉搜索框顶部/左侧/右侧可能出现的线，仅保留下划线。下划线颜色与显隐仍由格式面板「搜索框」组控制。
+* **滚动条轨道色默认值改为 #193653**：`DEFAULTS.selection.scrollbarTrackColor` 与 LESS `scrollbar-color` / `::-webkit-scrollbar-track` fallback 由 `#0A1428` 改为 `#193653`，与下拉面板背景统一（格式面板「滚动条-轨道色」仍保留可配）。
+* **换 GUID + 版本**：GUID `DateRangeSlicer20260825013` → `DateRangeSlicer20260825014`，version `2.11.0.0` → `2.11.1.0`，displayName 改为「日期区间切片器 v2.11.1-搜索框与滚动条微调」。
+
 ## 2.11.0.0
 * **预设项默认背景统一为 #193653**：`DEFAULTS.selection.presetBackground` 由 `rgba(255,255,255,0.03)` 改为 `#193653`，与输入框/下拉面板背景统一（仅回落默认值变更，格式面板保留可配）。
 * **搜索框与输入框底部间距收敛至约 1px**：`.drs-panel` 的 `gap` 由 `10px` 改为 `0`、面板上下内边距兜底 `10px`→`1px`（DEFAULTS `panelPaddingY:1`）、`.drs-list` 顶部内边距 `2px`→`1px`。搜索框上缘距触发器下缘约 1px。

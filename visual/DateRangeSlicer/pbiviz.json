@@ -1,11 +1,11 @@
 {
   "visual": {
     "name": "dateRangeSlicer",
-    "displayName": "日期区间切片器 v2.11-精简滚动条配置",
-    "guid": "DateRangeSlicer20260825013",
+    "displayName": "日期区间切片器 v2.11.1-搜索框与滚动条微调",
+    "guid": "DateRangeSlicer20260825014",
     "visualClassName": "DateRangeSlicer",
-    "version": "2.11.0.0",
-    "description": "（v2.11.0.0）3 项收敛型调整：预设项默认背景色 #193653（与输入框/面板统一）；搜索框与输入框底部间距收敛至约 1px；滚动条配置精简为仅保留轨道色与滑块色（移除宽度/箭头颜色/显示箭头，宽度固定 8px、箭头默认隐藏）。",
+    "version": "2.11.1.0",
+    "description": "（v2.11.1.0）搜索框顶部横线隐藏：显式去掉上/左/右边框，仅保留下划线；滚动条轨道色默认值由 #0A1428 改为 #193653（与面板背景统一）。基于 v2.11 精简滚动条配置。",
     "supportUrl": "https://community.powerbi.com",
     "gitHubUrl": "https://github.com/"
   },
