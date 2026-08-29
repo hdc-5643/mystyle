@@ -1,14 +1,14 @@
 {
-		"version": "2.10.0.0",
+		"version": "2.11.0.0",
 		"author": {"name":"BI Delivery","email":"bi@example.com"},
 		"resources": [
 			{
 				"resourceId": "rId0",
 				"sourceType": 5,
-				"file": "resources/DateRangeSlicer20260825012.pbiviz.json"
+				"file": "resources/DateRangeSlicer20260825013.pbiviz.json"
 			}
 		],
-		"visual": {"name":"dateRangeSlicer","displayName":"日期区间切片器 v2.10-搜索框独立配置","guid":"DateRangeSlicer20260825012","visualClassName":"DateRangeSlicer","version":"2.10.0.0","description":"（v2.10.0.0）搜索框独立配置：新增 6 项（背景色/下划线颜色/显示下划线/边框色/高度/字号），样式改为极简下划线风格（背景透明+无边框+底部下划线，吸顶固定）。滚动条箭头独立可配：新增箭头颜色与显示开关，与滑块色分开。4 处默认值调整：输入框下拉箭头大小 10→20、标头字体色 #B4B2A9→#FFFFFF、下拉面板背景 #0A1428→#193653、面板与输入框间距 4→0。","supportUrl":"https://community.powerbi.com","gitHubUrl":"https://github.com/"},
+		"visual": {"name":"dateRangeSlicer","displayName":"日期区间切片器 v2.11-精简滚动条配置","guid":"DateRangeSlicer20260825013","visualClassName":"DateRangeSlicer","version":"2.11.0.0","description":"（v2.11.0.0）3 项收敛型调整：预设项默认背景色 #193653（与输入框/面板统一）；搜索框与输入框底部间距收敛至约 1px；滚动条配置精简为仅保留轨道色与滑块色（移除宽度/箭头颜色/显示箭头，宽度固定 8px、箭头默认隐藏）。","supportUrl":"https://community.powerbi.com","gitHubUrl":"https://github.com/"},
 		"metadata": {
 			"pbivizjson": {
 				"resourceId": "rId0"

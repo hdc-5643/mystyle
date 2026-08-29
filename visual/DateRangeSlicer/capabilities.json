@@ -404,12 +404,6 @@
                         "numeric": true
                     }
                 },
-                "scrollbarWidth": {
-                    "displayName": "滚动条宽度（4-16）",
-                    "type": {
-                        "numeric": true
-                    }
-                },
                 "headerGap": {
                     "displayName": "标头与输入框间距（0-20）",
                     "type": {
@@ -468,22 +462,6 @@
                     "displayName": "搜索框字号（8-20）",
                     "type": {
                         "numeric": true
-                    }
-                },
-                "scrollbarArrowColor": {
-                    "displayName": "滚动条箭头颜色（仅 Webkit）",
-                    "type": {
-                        "fill": {
-                            "solid": {
-                                "color": true
-                            }
-                        }
-                    }
-                },
-                "scrollbarShowArrow": {
-                    "displayName": "滚动条显示箭头",
-                    "type": {
-                        "bool": true
                     }
                 }
             }

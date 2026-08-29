@@ -1,3 +1,9 @@
+## 2.11.0.0
+* **预设项默认背景统一为 #193653**：`DEFAULTS.selection.presetBackground` 由 `rgba(255,255,255,0.03)` 改为 `#193653`，与输入框/下拉面板背景统一（仅回落默认值变更，格式面板保留可配）。
+* **搜索框与输入框底部间距收敛至约 1px**：`.drs-panel` 的 `gap` 由 `10px` 改为 `0`、面板上下内边距兜底 `10px`→`1px`（DEFAULTS `panelPaddingY:1`）、`.drs-list` 顶部内边距 `2px`→`1px`。搜索框上缘距触发器下缘约 1px。
+* **滚动条配置精简（移除 3 项）**：删除 `scrollbarWidth`（宽度固定 8px）、`scrollbarArrowColor`、`scrollbarShowArrow`（箭头固定隐藏）三个可配项；格式面板「滚动条」组仅保留「轨道色」和「滑块色」。`applyStyles` 移除 `--drs-scrollbar-w / --drs-scrollbar-arrow / --drs-scrollbar-arrow-on` 三个变量，LESS 滚动条宽度固定 `8px`、箭头按钮固定 `display:none; width:0; height:0`。
+* **capabilities 变更 → 换 GUID**：`selection` 对象移除 3 属性。GUID `DateRangeSlicer20260825012` → `DateRangeSlicer20260825013`，version `2.10.0.0` → `2.11.0.0`，displayName 改为「日期区间切片器 v2.11-精简滚动条配置」。旧报表中已手动调过这 3 项的值会丢失（回落固定 8px / 隐藏）。旧视觉实例需删除画布上的旧视觉后重新导入。
+
 ## 2.10.0.0
 * **搜索框独立配置 + 极简下划线风格**：搜索框不再复用输入框背景/边框与值的行高/字号，改为独立可配。新增 6 个属性：搜索框背景色 `searchBackground`（默认 transparent）、下划线颜色 `searchUnderlineColor`（默认 #2C4A6B）、显示下划线 `searchShowUnderline`（默认 true）、边框色 `searchBorderColor`（默认 #2C4A6B，下划线风格默认不用）、高度 `searchHeight`（默认 24）、字号 `searchFontSize`（默认 11）。样式改为"背景透明 + 无边框 + 底部 1px 下划线 + 圆角归零"，聚焦时下划线变强调色。搜索框本就在列表滚动区之外、面板内固定（吸顶），无需改 JS。格式面板新增「搜索框」组（置于「值」组前）。
 * **滚动条箭头独立可配**：新增箭头颜色 `scrollbarArrowColor`（默认 #2C4A6B，与滑块色分开）和显示开关 `scrollbarShowArrow`（默认 false，延续 v2.8.0.3 隐藏行为）。LESS 滚动条按钮由写死 `display:none` 改为 `display:var(--drs-scrollbar-arrow-on)` + `background:var(--drs-scrollbar-arrow)`。注：箭头色仅 Webkit 生效，Firefox 无独立箭头 API。

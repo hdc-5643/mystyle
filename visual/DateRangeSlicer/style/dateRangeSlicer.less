@@ -31,7 +31,6 @@
     --drs-check-size: 14px;                             /* 勾选框尺寸 */
     --drs-check-radius: 2px;                             /* 勾选框圆角 */
     --drs-arrow-size: 10px;                              /* 下拉箭头大小 */
-    --drs-scrollbar-w: 8px;                              /* 滚动条宽度 */
     --drs-placeholder: rgba(255, 255, 255, 0.45);       /* 搜索框占位符色 */
     --drs-empty-fg: rgba(255, 255, 255, 0.5);            /* 空状态文字色 */
     --drs-active-bold: bold;                             /* 选中态文字加粗 */
@@ -168,7 +167,7 @@
     width: 100%;
     /* 上下由 panelPaddingY 控制；左右由 panelPaddingX 控制（默认 0，
        使面板内容区左边缘 = 触发器左边缘，搜索框/列表项文字与触发器文字对齐） */
-    padding: var(--drs-panel-pad-y, 10px) var(--drs-panel-pad-x, 0px);
+    padding: var(--drs-panel-pad-y, 1px) var(--drs-panel-pad-x, 0px);
     background: var(--drs-list-bg, #0A1428);
     border: 1px solid var(--drs-border);
     border-radius: var(--drs-radius);
@@ -176,7 +175,7 @@
     overflow-x: hidden;
     overflow-y: auto;
     flex-direction: column;
-    gap: 10px;
+    gap: 0;
 }
 .drs-panel.drs-panel-open {
     display: flex;
@@ -326,7 +325,7 @@
     max-height: calc(7 * var(--drs-item-h, 24px) + 6 * var(--drs-list-gap, 2px));
     overflow-y: auto;
     /* 顶部极小呼吸，避免搜索框与首行贴死 */
-    padding-top: 2px;
+    padding-top: 1px;
 }
 .drs-list-item {
     flex: 0 0 auto;
@@ -418,8 +417,8 @@
 .drs-panel::-webkit-scrollbar,
 .drs-list::-webkit-scrollbar,
 .drs-panel.drs-panel-inline::-webkit-scrollbar {
-    width: var(--drs-scrollbar-w, 8px);                /* 窄，不抢内容焦点 */
-    height: var(--drs-scrollbar-w, 8px);
+    width: 8px;                                        /* 固定窄宽，不抢内容焦点 */
+    height: 8px;
 }
 .drs-panel::-webkit-scrollbar-track,
 .drs-list::-webkit-scrollbar-track,
@@ -439,16 +438,14 @@
 .drs-panel.drs-panel-inline::-webkit-scrollbar-thumb:hover {
     background: var(--drs-accent);                       /* hover 时改用强调色，提供反馈 */
 }
-/* 滚动条两端的箭头按钮（原生 <> 方向标）：Webkit 专属，部分 Windows 主题下才显示。
-   显示/隐藏与颜色独立可配（--drs-scrollbar-arrow-on / --drs-scrollbar-arrow）。
-   注：Firefox 无独立箭头 API，箭头随滑块色，此配置仅 Webkit 生效。 */
+/* 滚动条两端的箭头按钮（原生 <> 方向标）：统一隐藏，宽度归零，
+   不再作为可配置项（v2.11 起移除 scrollbarArrowColor/scrollbarShowArrow 配置）。 */
 .drs-panel::-webkit-scrollbar-button,
 .drs-list::-webkit-scrollbar-button,
 .drs-panel.drs-panel-inline::-webkit-scrollbar-button {
-    display: var(--drs-scrollbar-arrow-on, none);
-    width: var(--drs-scrollbar-w, 8px);
-    height: var(--drs-scrollbar-w, 8px);
-    background: var(--drs-scrollbar-arrow, #2C4A6B);
+    display: none;
+    width: 0;
+    height: 0;
 }
 
 /* 列表模式下面板自身不滚动，改由 .drs-list 内部滚动，
