@@ -146,7 +146,9 @@
      * 该组合当年是为防日期输入框被挤压而加，v2.5 移除日期框后已无必要。
      */
     width: 100%;
-    padding: 10px;
+    /* 仅保留上下 10px 呼吸；左右归零，使面板内容区左边缘 = 触发器左边缘，
+       搜索框/列表项文字与触发器文字（均距左边界 8px）对齐 */
+    padding: 10px 0;
     background: var(--drs-list-bg, #0A1428);
     border: 1px solid var(--drs-border);
     border-radius: var(--drs-radius);

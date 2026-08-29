@@ -1,5 +1,5 @@
 {
-		"version": "2.8.0.3",
+		"version": "2.8.0.4",
 		"author": {"name":"BI Delivery","email":"bi@example.com"},
 		"resources": [
 			{
@@ -8,7 +8,7 @@
 				"file": "resources/DateRangeSlicer20260825010.pbiviz.json"
 			}
 		],
-		"visual": {"name":"dateRangeSlicer","displayName":"日期区间切片器 v2.8-列表布局对齐原生","guid":"DateRangeSlicer20260825010","visualClassName":"DateRangeSlicer","version":"2.8.0.3","description":"（v2.8.0.3）① 修复列表模式多列 bug（v2.8.0.2：移除 listEl display:block 覆盖，恢复 flex 单列）；② 触发器新增「文字大小」配置项（默认 12px，范围 8-24），独立于标头；③ 列表项左对齐保留勾选框间距（行间距默认 2px 不变）；④ 隐藏滚动条两端箭头按钮（原生 <> 方向标），仅 Webkit 有效；⑤ 列表项左侧 CSS 勾选框 + 紧凑行高 24px/字号 11px（v2.8.0.1 起）；⑥ 搜索框与列表无缝贴合、面板约 7 项才滚动（v2.8.0.0 起）。","supportUrl":"https://community.powerbi.com","gitHubUrl":"https://github.com/"},
+		"visual": {"name":"dateRangeSlicer","displayName":"日期区间切片器 v2.8-列表布局对齐原生","guid":"DateRangeSlicer20260825010","visualClassName":"DateRangeSlicer","version":"2.8.0.4","description":"（v2.8.0.3）① 修复列表模式多列 bug（v2.8.0.2：移除 listEl display:block 覆盖，恢复 flex 单列）；② 触发器新增「文字大小」配置项（默认 12px，范围 8-24），独立于标头；③ 列表项左对齐保留勾选框间距（行间距默认 2px 不变）；④ 隐藏滚动条两端箭头按钮（原生 <> 方向标），仅 Webkit 有效；⑤ 列表项左侧 CSS 勾选框 + 紧凑行高 24px/字号 11px（v2.8.0.1 起）；⑥ 搜索框与列表无缝贴合、面板约 7 项才滚动（v2.8.0.0 起）。","supportUrl":"https://community.powerbi.com","gitHubUrl":"https://github.com/"},
 		"metadata": {
 			"pbivizjson": {
 				"resourceId": "rId0"

@@ -1,3 +1,6 @@
+## 2.8.0.4
+* **面板内容左对齐触发器**：`.drs-panel` 的 `padding: 10px` 改为 `padding: 10px 0`（去掉左右内边距），使面板内容区左边缘 = 面板左边框内侧 = 触发器左边缘。搜索框（保留 `padding:0 8px`）与列表项（保留 `padding:0 8px 0 28px`）自身左右内边距不变，其文字/checkbox 左缘（距左边界 8px）与触发器文字左缘（8px）自然对齐。无搜索框时列表项作为面板首个可见子元素同样对齐。预设模式 `.drs-preset` 同在面板内，自动左移一致。纯样式改动，capabilities/GUID 不变（010），bump 2.8.0.3→2.8.0.4。
+
 ## 2.8.0.3
 * **触发器新增「文字大小」配置项**：格式面板「下拉样式 → 触发器」组新增「文字大小」numUpDown（默认 12px，范围 8-24）。经 `capabilities.selection.triggerFontSize` → `DEFAULTS` → `readSettings`（`clamp(...,8,24,...)`）→ `applyStyles` 写入 CSS 变量 `--drs-trigger-fs` → LESS `.drs-trigger { font-size: var(--drs-trigger-fs, 12px) }` 链路驱动。此前触发器字号写死 12px 不可调。
 * **隐藏滚动条两端箭头按钮**：新增 `.drs-panel/ .drs-list/ .drs-panel-inline::-webkit-scrollbar-button { display: none; }`，去掉原生滚动条两端的 <> 方向标（仅 Webkit 有效，部分 Windows 主题下仍可能显示）。
