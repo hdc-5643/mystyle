@@ -1,68 +1,55 @@
-[![build](https://github.com/microsoft/PowerBI-visuals-ChicletSlicer/actions/workflows/build.yml/badge.svg)](https://github.com/microsoft/PowerBI-visuals-ChicletSlicer/actions/workflows/build.yml) [![CodeQL](https://github.com/microsoft/PowerBI-visuals-ChicletSlicer/actions/workflows/codeql.yml/badge.svg)](https://github.com/microsoft/PowerBI-visuals-ChicletSlicer/actions/workflows/codeql.yml)
-# PowerBI-visuals-ChicletSlicer
-> Use this slicer to display image and/or text buttons that act as an in-canvas filter. Define additional properties for the layout & selection to customize this slicer to meet your specific needs
+# DateRangeSlicer — 日期区间切片器
 
-![ChicletSlicer screenshot](./assets/screenshot.png)
+Power BI 自定义视觉，提供双模式日期/值筛选。
 
-# Overview
+## 功能
 
-The Chiclet Slicer was inspired by the great slicer control found in Excel since 2010, but with much greater customization options.
-Chiclet are a slicers made of buttons, that can also be arranged horizontally for a very efficient real estate use, or arranged as a matrix for a super compact form.
-Chiclet slicer also supports cross highlighting.
-That's not all - they can even contain images!
+### 预设区间模式（默认）
+单列垂直列表，5 个预设：本月 / 上月 / 近7天 / 近15天 / 近30天。选中立即下发 `AdvancedFilter`（介于筛选），预设区间随数据刷新自动跟进。
 
-See also [Chiclet Slicer at Microsoft Office store](https://store.office.com/en-us/app.aspx?assetid=WA104380756&sourcecorrid=1094fb73-f014-4f7a-accf-65142c8316af&searchapppos=0&ui=en-US&rs=en-US&ad=US&appredirect=false)
+### 值列表模式
+把拖入字段的唯一值列成可搜索的单列列表，支持多选。日期与文本字段均可，用 `BasicFilter`（Is/In）下发。含「（全选）」项和搜索框，降序排列。
 
-ChicletSlicer has 3 bucket fields: Category, Values and Images.
-1. Category - Field with a list of categories for each "chiclet" item. String values
-2. Values - Field with values for Category field. This field use just for cross filtering with other visuals.
-3. Image - Field with a list of images for each "chiclet" item. Values of this field can be presented in "base64 image" format or it can be just external link to image.
+格式面板「切片器模式」卡片切换两种模式。
 
-# Selection
-You can select any chiclet item for data filtering and also you can use multi selection. For cleaning of selection you should click to "Сlear" button on the right top corner of a visual.
+## 布局
 
-# Search
-You can filter a list of chiclets items by category using string search. For activation of search field you should click to "search" in options of the visual. After that you can input search string and data will be filtered immediately.
+- 标头与触发器固定贴视觉对象顶部
+- 面板宽度 = 触发器宽度，右边缘贴齐
+- 浮层浮在触发器正下方，带阴影与展开动画
+- 空间不足自动翻转 / 限高内部滚动 / 极矮退化为流内展开
 
-# Settings of ChicletSlicer
-### General options
-- Orientation: An order of "chiclets" list building. Can be vertical or horizontal
-- Columns: Amount of ChicletSlicer columns.
-- Rows: Amount of ChicletSlicer rows.
-- Show disabled: Setting which regulate where will be displayed disabled chiclets items.
-  This setting has 3 selection values:
-  - Inplace: Disabled chiclets will be located in a their original positions.
-  - Bottom: Disabled chiclets will be located in a bottom of the list.
-  - Hide: Disabled chiclets will be hide from list.
-- Multiple selection:
-  - If this option is turned on you will be able to select chiclets without Ctrl button. (It will be usefull for multiple selection on mobile devices)
-  - If this option is turned off you have to use Ctrl button for multiple selection.
-- Forced selection: This setting forcibly select first item and doesn't allow to unselect any chiclet item
+## 收起方式
 
-### Chiclets options
-- Text size: Size of text for chiclet item.
-- Height: Height of chicklet item.
-- Width: Width of chiclet item.
-- Background: Background color of all ChicletSlicer.
-- Transparency: Transparency of ChicletSlicer background.
-- Selected Color: Background color of selected chiclet item.
-- Hover color: Text color when you hover to chiclet item.
-- Unselected color: Background color of unselected chicklet items.
-- Disabled color: Color of disabled chicklet item.
-- Outline color: Color for outline of chiclet item.
-- Outline weight: Thickness of chiclet item outline.
-- Text color: Color of chiclet item text.
-- Padding: Indent around chiclet item.
-- Outline style: Style of outline.
-  This settins has 3 selection values:
-  - Rounded: Round outline edges
-  - Cut: Semicircular outline edges
-  - Square: Square outline edges
+点项、再点触发器、Esc、点视觉内非交互空白区、或视觉对象失去焦点。
 
-### Images options
-- Image split: Height of Image for chiclet item
-- Round: Shows image as rounded
-- Stretch image: Stretch image to full chiclet item width
-- Bottom image:
-  - If this option is turned on image will be in the bottom of chiclet item, under the text
-  - If this option is turned off image will be in the top of chiclet item, above the text
+## 构建
+
+```powershell
+cd visual\DateRangeSlicer
+npm run package
+```
+
+产物在 `dist/DateRangeSlicer20260825008.<version>.pbiviz`。
+
+**注意**：PowerShell 下 `cd` 遇中文路径会报错，须用相对路径。
+
+## 导入
+
+Power BI Desktop → 导入视觉对象 → 选 `dist/` 下的 `.pbiviz`。
+
+改了 `capabilities.json` 后必须换 GUID，否则 PBI Desktop 沿用内存旧实例。
+
+## 技术栈
+
+- Power BI Custom Visuals API 5.4.0
+- TypeScript + LESS + Webpack
+- 无前端框架依赖
+
+## 当前版本
+
+v2.6.0.0 / GUID `DateRangeSlicer20260825008`
+
+变更历史见 [CHANGELOG.md](./CHANGELOG.md)。
+开发知识库见 `visual/powerbi-visual-kb/`。
+实战踩坑经验见 `.workbuddy/skills/pbi-custom-visual-dev/SKILL.md`。
