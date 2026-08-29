@@ -78,7 +78,9 @@ const DEFAULTS = {
         listActiveBackground: "rgba(55, 138, 221, 0.18)",
         // 滚动条暗色配色（贴近原生切片器观感）
         scrollbarTrackColor: "#0A1428",
-        scrollbarThumbColor: "#2C4A6B"
+        scrollbarThumbColor: "#2C4A6B",
+        // 列表项行间距：默认 4px，范围 0-12（贴近原生切片器观感）
+        listGap: 4
     },
     // 「默认本月」：首次加载（且无已保存筛选）时自动将区间套为最新日期所在月（月首日→最新日期，MTD），随数据刷新自动跟进
     defaultThisMonth: true,
@@ -586,6 +588,11 @@ export class DateRangeSlicer implements IVisual {
                             displayName: "选中态背景色",
                             uid: "drs-selection-listactive-bg-picker",
                             control: colorPicker("selection", "listActiveBackground", selection.listActiveBackground)
+                        },
+                        {
+                            displayName: "行间距",
+                            uid: "drs-selection-listgap-input",
+                            control: numUpDown("selection", "listGap", selection.listGap, 0, 12)
                         }
                     ]
                 },
@@ -1387,6 +1394,7 @@ export class DateRangeSlicer implements IVisual {
         this.settings.selection.listActiveBackground = color(s.listActiveBackground, DEFAULTS.selection.listActiveBackground);
         this.settings.selection.scrollbarTrackColor = color(s.scrollbarTrackColor, DEFAULTS.selection.scrollbarTrackColor);
         this.settings.selection.scrollbarThumbColor = color(s.scrollbarThumbColor, DEFAULTS.selection.scrollbarThumbColor);
+        this.settings.selection.listGap = clamp(s.listGap, 0, 12, DEFAULTS.selection.listGap);
 
         const db = objs.defaultBehavior || {};
         this.settings.defaultThisMonth = bool(db.defaultThisMonth, DEFAULTS.defaultThisMonth);
@@ -1467,5 +1475,6 @@ export class DateRangeSlicer implements IVisual {
         // 滚动条暗色配色
         this.root.style.setProperty("--drs-scrollbar-track", s.scrollbarTrackColor);
         this.root.style.setProperty("--drs-scrollbar-thumb", s.scrollbarThumbColor);
+        this.root.style.setProperty("--drs-list-gap", `${s.listGap}px`);
     }
 }

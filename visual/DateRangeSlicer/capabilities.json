@@ -285,6 +285,12 @@
                             }
                         }
                     }
+                },
+                "listGap": {
+                    "displayName": "行间距（列表项之间的间距，0-12）",
+                    "type": {
+                        "numeric": true
+                    }
                 }
             }
         },

@@ -232,7 +232,8 @@
     box-sizing: border-box;
     width: 100%;
     height: 28px;
-    margin-bottom: 6px;
+    /* 搜索框与下方列表紧密贴合（原生切片器无空隙），仅留 2px 视觉呼吸 */
+    margin-bottom: 0;
     padding: 0 8px;
     color: var(--drs-list-fg, #FFFFFF);
     font-family: "Segoe UI", sans-serif;
@@ -256,10 +257,19 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    /* 防御性：杜绝任何情况下的多列回流（单列是列表模式的唯一正确形态） */
+    flex-wrap: nowrap;
+    /* 行间距由格式面板「行间距」配置驱动，默认 4px */
+    gap: var(--drs-list-gap, 4px);
     /* 列表区自己滚动，搜索框保持固定可见 */
     min-height: 0;
+    /* 面板默认最大高度约 7 项：值 ≤ 7 项不出现滚动条，> 7 项才出细滚动条，
+       与原生切片器观感一致。列表项固定 28px，行间距参与累加 */
+    --drs-item-h: 28px;
+    max-height: calc(7 * var(--drs-item-h) + 6 * var(--drs-list-gap, 4px));
     overflow-y: auto;
+    /* 顶部极小呼吸，避免搜索框与首行贴死 */
+    padding-top: 2px;
 }
 .drs-list-item {
     flex: 0 0 auto;
@@ -268,7 +278,9 @@
     color: var(--drs-list-fg, #FFFFFF);
     font-size: 12px;
     font-family: "Segoe UI", sans-serif;
+    /* 左对齐加固：单列下文字左对齐，显式声明防止被覆盖 */
     text-align: left;
+    justify-content: flex-start;
     cursor: pointer;
     white-space: nowrap;
     overflow: hidden;

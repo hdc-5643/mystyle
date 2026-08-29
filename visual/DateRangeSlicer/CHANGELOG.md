@@ -1,3 +1,13 @@
+## 2.8.0.0
+* **列表模式布局对齐原生切片器（非颜色，颜色保持 v2.7 成果）**。
+* **新增「行间距」配置项**：格式面板「下拉样式 → 列表项」组新增「行间距」数值输入，默认 4px、范围 0-12。经 `capabilities.selection.listGap` → `DEFAULTS` → `readSettings`（`clamp(...,0,12,...)`）→ `applyStyles` 写入 CSS 变量 `--drs-list-gap` → LESS `.drs-list { gap: var(--drs-list-gap, 4px) }` 完整链路驱动。
+* **搜索框与列表无缝贴合**：`.drs-search` 的 `margin-bottom` 由 6px 改为 0（原生切片器搜索框与列表紧连无空隙），列表顶部仅留 2px 视觉呼吸（`padding-top: 2px`）。
+* **列表项文字左对齐加固**：`.drs-list-item` 显式 `justify-content: flex-start`（其为 flex 容器时），确保单列下不被居中覆盖。
+* **面板默认约 7 项才滚动**：`.drs-list` 新增 `--drs-item-h: 28px` 与 `max-height: calc(7 * var(--drs-item-h) + 6 * var(--drs-list-gap, 4px))`。值 ≤ 7 项时不出现滚动条，> 7 项才出现细滚动条，解决「滚动条一出现就过长」。滚动条样式沿用 v2.7 暗色细条（8px），未改。
+* **防御性单列**：`.drs-list` 加 `flex-wrap: nowrap`，杜绝任何情况下的多列回流（代码层面本已是单列，多列是旧缓存实例的观感）。
+* **capabilities 变更 → 换 GUID**：`selection` 对象新增 `listGap` 属性。GUID `DateRangeSlicer20260825009` → `DateRangeSlicer20260825010`，displayName 改为「日期区间切片器 v2.8-列表布局对齐原生」。旧视觉实例需删除画布上的旧视觉后重新导入（capabilities 变更的硬性要求，也是之前截图多列的根因）。
+* 构建验证：解包产物确认新 GUID/2.8.0.0、`listGap` 属性、`--drs-list-gap` 变量写入、`.drs-list` 含 `max-height` 与 `flex-wrap:nowrap`、`.drs-search` 的 `margin-bottom` 已无 6px。
+
 ## 2.7.0.0
 * **样式配置增强（格式面板「下拉样式」卡片，14 项按 4 组重排）**。
 * **修复：触发器文字色独立于强调色**（v2.6 遗留 bug）。原 `--drs-fg` 被 `applyStyles()` 绑成 `s.accentColor`，\n  改「强调色」会把触发器文字一并变色。现新增 `triggerTextColor`（默认 `#FFFFFF`），`--drs-fg` 改绑它。\n  强调色（`--drs-accent`）仅用于选中态边框与滚动条 hover，不再影响触发器文字。
