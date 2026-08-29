@@ -9,13 +9,33 @@
     box-sizing: border-box;
     font-family: "Segoe UI", sans-serif;
     color: var(--drs-fg, #FFFFFF);
-    --drs-bg: #142436;
+    --drs-bg: #193653;
     --drs-fg: #FFFFFF;
     --drs-border: #2C4A6B;
     --drs-accent: #378ADD;
     --drs-radius: 3px;
     --drs-border-width: 1px;
     --drs-label-size: 12px;
+
+    /* —— 全局可配 token（由 applyStyles 写入，以下为兜底默认值） —— */
+    --drs-item-h: 24px;                                  /* 行高（值/预设/搜索框共享） */
+    --drs-row-fs: 11px;                                  /* 行字号（共享） */
+    --drs-row-pad-x: 8px;                                /* 行水平内边距（共享） */
+    --drs-preset-bg: rgba(255, 255, 255, 0.03);          /* 预设项默认背景 */
+    --drs-preset-hover-bg: rgba(255, 255, 255, 0.05);    /* 预设项悬浮背景 */
+    --drs-trigger-h: 30px;                               /* 输入框高度 */
+    --drs-trigger-pad-x: 8px;                            /* 输入框水平内边距 */
+    --drs-panel-pad-y: 10px;                             /* 下拉面板上下内边距 */
+    --drs-panel-pad-x: 0px;                              /* 下拉面板左右内边距 */
+    --drs-panel-offset: 4px;                             /* 下拉面板与输入框间距 */
+    --drs-check-size: 14px;                             /* 勾选框尺寸 */
+    --drs-check-radius: 2px;                             /* 勾选框圆角 */
+    --drs-arrow-size: 10px;                              /* 下拉箭头大小 */
+    --drs-scrollbar-w: 8px;                              /* 滚动条宽度 */
+    --drs-placeholder: rgba(255, 255, 255, 0.45);       /* 搜索框占位符色 */
+    --drs-empty-fg: rgba(255, 255, 255, 0.5);            /* 空状态文字色 */
+    --drs-active-bold: bold;                             /* 选中态文字加粗 */
+    --drs-header-gap: 4px;                               /* 标头与输入框间距 */
 }
 
 /* 标头与触发器的布局 */
@@ -23,7 +43,7 @@
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
-    gap: 4px;
+    gap: var(--drs-header-gap, 4px);
 }
 .drs-layout-left {
     flex-direction: row;
@@ -31,7 +51,7 @@
        视觉对象被拉高时上方留大片空白。改为 flex-start 后整行贴顶 */
     align-items: flex-start;
     justify-content: flex-start;
-    gap: 6px;
+    gap: var(--drs-header-gap, 4px);
 }
 
 /* 触发器 + 浮层面板的定位容器：面板 absolute 相对它定位，
@@ -88,9 +108,9 @@
     align-items: center;
     justify-content: space-between;
     gap: 6px;
-    height: 30px;
+    height: var(--drs-trigger-h, 30px);
     box-sizing: border-box;
-    padding: 0 8px;
+    padding: 0 var(--drs-trigger-pad-x, 8px);
     background: var(--drs-bg);
     border: var(--drs-border-width) solid var(--drs-border);
     border-radius: var(--drs-radius);
@@ -118,7 +138,7 @@
 }
 .drs-trigger-arrow {
     flex: 0 0 auto;
-    font-size: 10px;
+    font-size: var(--drs-arrow-size, 10px);
     line-height: 1;
     color: var(--drs-fg);
     transition: transform .15s ease;
@@ -134,7 +154,7 @@
     /* 右对齐触发器：右边缘贴齐 */
     right: 0;
     left: auto;
-    top: calc(100% + 4px);
+    top: calc(100% + var(--drs-panel-offset, 4px));
     z-index: 1000;
     box-sizing: border-box;
     /*
@@ -146,9 +166,9 @@
      * 该组合当年是为防日期输入框被挤压而加，v2.5 移除日期框后已无必要。
      */
     width: 100%;
-    /* 仅保留上下 10px 呼吸；左右归零，使面板内容区左边缘 = 触发器左边缘，
-       搜索框/列表项文字与触发器文字（均距左边界 8px）对齐 */
-    padding: 10px 0;
+    /* 上下由 panelPaddingY 控制；左右由 panelPaddingX 控制（默认 0，
+       使面板内容区左边缘 = 触发器左边缘，搜索框/列表项文字与触发器文字对齐） */
+    padding: var(--drs-panel-pad-y, 10px) var(--drs-panel-pad-x, 0px);
     background: var(--drs-list-bg, #0A1428);
     border: 1px solid var(--drs-border);
     border-radius: var(--drs-radius);
@@ -165,7 +185,7 @@
 /* 下方空间不足：向上翻转展开 */
 .drs-panel.drs-panel-open.drs-panel-up {
     top: auto;
-    bottom: calc(100% + 4px);
+    bottom: calc(100% + var(--drs-panel-offset, 4px));
     animation-name: drs-pop-up;
 }
 /* 视觉框极矮（上下都放不下）：退化为视觉内流内展开，保证内容可见 */
@@ -195,13 +215,14 @@
        从而溢出于面板（面板有 overflow-x:hidden，表现为文字被裁掉）。
        改用 1fr 让列严格跟随面板宽度，文字截断交给 .drs-preset 的 ellipsis。 */
     grid-template-columns: 1fr;
-    gap: 6px;
+    gap: var(--drs-list-gap, 2px);
 }
 .drs-preset {
-    height: 30px;
-    padding: 0 10px;
+    position: relative;
+    height: var(--drs-item-h, 24px);
+    padding: 0 var(--drs-row-pad-x, 8px) 0 28px;
     color: var(--drs-list-fg, #FFFFFF);
-    font-size: 12px;
+    font-size: var(--drs-row-fs, 11px);
     font-family: "Segoe UI", sans-serif;
     text-align: left;
     cursor: pointer;
@@ -211,21 +232,54 @@
     text-overflow: ellipsis;
     border-radius: var(--drs-radius);
     border: 1px solid transparent;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--drs-preset-bg, rgba(255, 255, 255, 0.03));
     transition: color .12s ease, background-color .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+/* 左侧勾选框：与列表项同一套 checkbox 观感（纯 CSS 绘制） */
+.drs-preset::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: var(--drs-check-size, 14px);
+    height: var(--drs-check-size, 14px);
+    box-sizing: border-box;
+    border: 1px solid var(--drs-border);
+    border-radius: var(--drs-check-radius, 2px);
+    background: var(--drs-bg);
+    transition: background-color .12s ease, border-color .12s ease;
+}
+/* 选中态：勾选框填强调色 */
+.drs-preset.active::before {
+    background: var(--drs-accent);
+    border-color: var(--drs-accent);
+}
+/* 选中态：白色对勾 */
+.drs-preset.active::after {
+    content: "";
+    position: absolute;
+    left: calc(8px + var(--drs-check-size, 14px) / 2 - 2px);
+    top: 50%;
+    width: 4px;
+    height: 8px;
+    box-sizing: border-box;
+    border: solid #FFFFFF;
+    border-width: 0 2px 2px 0;
+    transform: translateY(-60%) rotate(45deg);
 }
 .drs-preset:hover {
     color: var(--drs-list-hover-fg, #B4B2A9);
-    background: var(--drs-list-hover-bg, rgba(255, 255, 255, 0.05));
+    background: var(--drs-preset-hover-bg, rgba(255, 255, 255, 0.05));
 }
+/* 选中态：仅文字高亮 + 勾选框（与列表项一致，不再整行蓝框/蓝底） */
 .drs-preset.active {
-    background: var(--drs-list-active-bg, rgba(55, 138, 221, 0.18));
     color: var(--drs-list-active-fg, #378ADD);
-    font-weight: 600;
-    border: 1px solid var(--drs-accent);
+    font-weight: var(--drs-active-bold, bold);
+    background: var(--drs-list-active-bg, transparent);
 }
 .drs-preset.active:hover {
-    background: var(--drs-list-active-bg, rgba(55, 138, 221, 0.18));
+    background: var(--drs-list-active-bg, transparent);
 }
 
 /* ---------- 列表模式：搜索框 + 唯一值列表（多选） ---------- */
@@ -233,22 +287,22 @@
     flex: 0 0 auto;
     box-sizing: border-box;
     width: 100%;
-    height: 28px;
+    height: var(--drs-item-h, 24px);
     /* 搜索框与下方列表紧密贴合（原生切片器无空隙），仅留 2px 视觉呼吸 */
     margin-bottom: 0;
     padding: 0 8px;
     color: var(--drs-list-fg, #FFFFFF);
     font-family: "Segoe UI", sans-serif;
-    font-size: 12px;
-    background: var(--drs-bg, #142436);
+    font-size: var(--drs-row-fs, 11px);
+    background: var(--drs-bg, #193653);
     border: var(--drs-border-width) solid var(--drs-border);
     border-radius: var(--drs-radius);
     outline: none;
     transition: border-color .15s ease, box-shadow .15s ease;
 }
 .drs-search::placeholder {
-    color: var(--drs-list-fg, #FFFFFF);
-    opacity: .45;
+    color: var(--drs-placeholder, rgba(255, 255, 255, 0.45));
+    opacity: 1;
 }
 .drs-search:focus {
     border-color: var(--drs-accent);
@@ -266,21 +320,20 @@
     /* 列表区自己滚动，搜索框保持固定可见 */
     min-height: 0;
     /* 面板默认最大高度约 7 项：值 ≤ 7 项不出现滚动条，> 7 项才出细滚动条，
-       与原生切片器观感一致。列表项固定 24px，行间距参与累加 */
-    --drs-item-h: 24px;
-    max-height: calc(7 * var(--drs-item-h) + 6 * var(--drs-list-gap, 2px));
+       与原生切片器观感一致。行高/行间距参与累加 */
+    max-height: calc(7 * var(--drs-item-h, 24px) + 6 * var(--drs-list-gap, 2px));
     overflow-y: auto;
     /* 顶部极小呼吸，避免搜索框与首行贴死 */
     padding-top: 2px;
 }
 .drs-list-item {
     flex: 0 0 auto;
-    /* 原生下拉切片器紧凑行高（约 24px，比预设项矮一档） */
-    height: 24px;
-    /* 左侧给勾选框留出空间：checkmark(14) + 间距(6) = 20 */
-    padding: 0 8px 0 28px;
+    /* 行高由 token 驱动（值/预设/搜索框共享） */
+    height: var(--drs-item-h, 24px);
+    /* 左侧给勾选框留出空间：checkmark + 间距 */
+    padding: 0 var(--drs-row-pad-x, 8px) 0 28px;
     color: var(--drs-list-fg, #FFFFFF);
-    font-size: 11px;
+    font-size: var(--drs-row-fs, 11px);
     font-family: "Segoe UI", sans-serif;
     /* 左对齐加固：单列下文字左对齐，显式声明防止被覆盖 */
     text-align: left;
@@ -303,12 +356,12 @@
     left: 8px;
     top: 50%;
     transform: translateY(-50%);
-    width: 14px;
-    height: 14px;
+    width: var(--drs-check-size, 14px);
+    height: var(--drs-check-size, 14px);
     box-sizing: border-box;
     border: 1px solid var(--drs-border);
-    border-radius: 2px;
-    background: var(--drs-bg, #142436);
+    border-radius: var(--drs-check-radius, 2px);
+    background: var(--drs-bg);
     transition: background-color .12s ease, border-color .12s ease;
 }
 /* 选中态：勾选框填强调色 + 对勾 */
@@ -335,7 +388,7 @@
 /* 选中态：文字用选中态文字色（不再整行描边，改为原生式的"勾选框 + 文字高亮"） */
 .drs-list-item.active {
     color: var(--drs-list-active-fg, #378ADD);
-    font-weight: 600;
+    font-weight: var(--drs-active-bold, bold);
     background: transparent;
 }
 .drs-list-item.active:hover {
@@ -345,9 +398,9 @@
 .drs-list-empty {
     flex: 0 0 auto;
     padding: 8px 10px;
-    color: var(--drs-list-fg, #FFFFFF);
-    opacity: .5;
-    font-size: 12px;
+    color: var(--drs-empty-fg, rgba(255, 255, 255, 0.5));
+    opacity: 1;
+    font-size: var(--drs-row-fs, 11px);
     font-family: "Segoe UI", sans-serif;
     text-align: center;
 }
@@ -363,8 +416,8 @@
 .drs-panel::-webkit-scrollbar,
 .drs-list::-webkit-scrollbar,
 .drs-panel.drs-panel-inline::-webkit-scrollbar {
-    width: 8px;                                         /* 窄，不抢内容焦点 */
-    height: 8px;
+    width: var(--drs-scrollbar-w, 8px);                /* 窄，不抢内容焦点 */
+    height: var(--drs-scrollbar-w, 8px);
 }
 .drs-panel::-webkit-scrollbar-track,
 .drs-list::-webkit-scrollbar-track,

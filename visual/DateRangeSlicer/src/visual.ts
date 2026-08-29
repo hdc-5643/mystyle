@@ -62,27 +62,46 @@ const DEFAULTS = {
     },
     // 下拉样式（select 框 + 下拉面板）
     selection: {
-        backgroundColor: "#142436",
+        // —— 输入框（触发器）——
+        backgroundColor: "#193653",          // 输入框背景（用户指定 #193653）
+        triggerTextColor: "#FFFFFF",        // 输入框文字色（用户指定 #FFFFFF）
+        triggerFontSize: 12,                // 输入框文字大小（px）
+        triggerHeight: 30,                  // 输入框高度（px）
+        triggerPaddingX: 8,                 // 输入框水平内边距（px）
+        arrowSize: 10,                      // 下拉箭头大小（px）
+        // —— 通用边框/圆角/强调 ——
         borderColor: "#2C4A6B",
         borderWidth: 1,
         borderRadius: 3,
-        accentColor: "#378ADD",
-        listBackground: "#0A1428",
-        listText: "#FFFFFF",
-        listHoverText: "#B4B2A9",
-        listHoverBackground: "transparent",
-        // 触发器文字色：独立控制，不再复用强调色
-        triggerTextColor: "#FFFFFF",
-        // 触发器文字大小（px）：独立控制，默认 12
-        triggerFontSize: 12,
-        // 选中态颜色：独立控制，不再硬编码
-        listActiveText: "#378ADD",
-        listActiveBackground: "rgba(55, 138, 221, 0.18)",
-        // 滚动条暗色配色（贴近原生切片器观感）
-        scrollbarTrackColor: "#0A1428",
-        scrollbarThumbColor: "#2C4A6B",
-        // 列表项行间距：默认 2px，范围 0-12（贴近原生切片器紧凑观感）
-        listGap: 2
+        accentColor: "#378ADD",             // 强调色（选中勾选框/边框）
+        // —— 下拉面板 ——
+        listBackground: "#0A1428",          // 下拉面板背景色
+        listText: "#FFFFFF",                // 下拉面板文字色
+        panelPaddingY: 10,                  // 面板上下内边距（px）
+        panelPaddingX: 0,                   // 面板左右内边距（px）
+        panelOffset: 4,                     // 面板与输入框间距（px）
+        // —— 值 / 预设行（共享 token）——
+        listHoverText: "#B4B2A9",           // 悬浮文字色
+        listHoverBackground: "transparent", // 悬浮背景色
+        listActiveText: "#378ADD",          // 选中文字色
+        listActiveBackground: "transparent",// 选中背景色（无整行底）
+        activeBold: true,                   // 选中态文字加粗
+        listGap: 2,                         // 行间距（值项之间，0-12）
+        itemHeight: 24,                     // 行高（值/预设/搜索框共享）
+        itemFontSize: 11,                   // 行字号（共享）
+        itemPaddingX: 8,                    // 行水平内边距（共享）
+        presetBackground: "rgba(255, 255, 255, 0.03)",     // 预设项默认背景
+        presetHoverBackground: "rgba(255, 255, 255, 0.05)",// 预设项悬浮背景
+        placeholderColor: "rgba(255, 255, 255, 0.45)",     // 搜索框占位符色
+        emptyTextColor: "rgba(255, 255, 255, 0.5)",        // 空状态文字色
+        checkSize: 14,                      // 勾选框尺寸（px）
+        checkRadius: 2,                     // 勾选框圆角（px）
+        // —— 滚动条 ——
+        scrollbarTrackColor: "#0A1428",     // 轨道色
+        scrollbarThumbColor: "#2C4A6B",     // 滑块色
+        scrollbarWidth: 8,                  // 滚动条宽度（px）
+        // —— 标头 ——
+        headerGap: 4                        // 标头与输入框间距（px）
     },
     // 「默认本月」：首次加载（且无已保存筛选）时自动将区间套为最新日期所在月（月首日→最新日期，MTD），随数据刷新自动跟进
     defaultThisMonth: true,
@@ -502,6 +521,11 @@ export class DateRangeSlicer implements IVisual {
                             displayName: "背景色",
                             uid: "drs-header-bg-picker",
                             control: colorPicker("header", "background", header.background)
+                        },
+                        {
+                            displayName: "与输入框间距",
+                            uid: "drs-header-gap-input",
+                            control: numUpDown("header", "headerGap", this.settings.selection.headerGap, 0, 20)
                         }
                     ]
                 }
@@ -513,7 +537,7 @@ export class DateRangeSlicer implements IVisual {
             uid: "drs-selection-card",
             groups: [
                 {
-                    displayName: "触发器",
+                    displayName: "输入框",
                     uid: "drs-selection-trigger-group",
                     collapsible: true,
                     slices: [
@@ -523,7 +547,7 @@ export class DateRangeSlicer implements IVisual {
                             control: colorPicker("selection", "backgroundColor", selection.backgroundColor)
                         },
                         {
-                            displayName: "文字色（独立于强调色）",
+                            displayName: "文字色",
                             uid: "drs-selection-triggertext-picker",
                             control: colorPicker("selection", "triggerTextColor", selection.triggerTextColor)
                         },
@@ -531,6 +555,16 @@ export class DateRangeSlicer implements IVisual {
                             displayName: "文字大小",
                             uid: "drs-selection-trigger-fs-input",
                             control: numUpDown("selection", "triggerFontSize", selection.triggerFontSize, 8, 24)
+                        },
+                        {
+                            displayName: "高度",
+                            uid: "drs-selection-trigger-h-input",
+                            control: numUpDown("selection", "triggerHeight", selection.triggerHeight, 16, 60)
+                        },
+                        {
+                            displayName: "水平内边距",
+                            uid: "drs-selection-trigger-padx-input",
+                            control: numUpDown("selection", "triggerPaddingX", selection.triggerPaddingX, 0, 24)
                         },
                         {
                             displayName: "边框颜色",
@@ -546,35 +580,65 @@ export class DateRangeSlicer implements IVisual {
                             displayName: "圆角",
                             uid: "drs-selection-radius-input",
                             control: numUpDown("selection", "borderRadius", selection.borderRadius, 0, 10)
+                        },
+                        {
+                            displayName: "下拉箭头大小",
+                            uid: "drs-selection-arrow-input",
+                            control: numUpDown("selection", "arrowSize", selection.arrowSize, 6, 20)
                         }
                     ]
                 },
                 {
-                    displayName: "面板",
+                    displayName: "下拉面板",
                     uid: "drs-selection-panel-group",
                     collapsible: true,
                     slices: [
                         {
-                            displayName: "下拉面板背景色",
+                            displayName: "背景色",
                             uid: "drs-selection-listbg-picker",
                             control: colorPicker("selection", "listBackground", selection.listBackground)
                         },
                         {
-                            displayName: "下拉面板文字色",
+                            displayName: "文字色",
                             uid: "drs-selection-listtext-picker",
                             control: colorPicker("selection", "listText", selection.listText)
+                        },
+                        {
+                            displayName: "上下内边距",
+                            uid: "drs-selection-panel-pady-input",
+                            control: numUpDown("selection", "panelPaddingY", selection.panelPaddingY, 0, 40)
+                        },
+                        {
+                            displayName: "左右内边距",
+                            uid: "drs-selection-panel-padx-input",
+                            control: numUpDown("selection", "panelPaddingX", selection.panelPaddingX, 0, 40)
+                        },
+                        {
+                            displayName: "与输入框间距",
+                            uid: "drs-selection-panel-offset-input",
+                            control: numUpDown("selection", "panelOffset", selection.panelOffset, 0, 20)
                         }
                     ]
                 },
                 {
-                    displayName: "列表项",
+                    displayName: "值",
                     uid: "drs-selection-listitem-group",
                     collapsible: true,
                     slices: [
                         {
-                            displayName: "强调色（选中边框）",
+                            displayName: "强调色（选中勾选框/边框）",
                             uid: "drs-selection-accent-picker",
                             control: colorPicker("selection", "accentColor", selection.accentColor)
+                        },
+                        {
+                            displayName: "预设项默认背景色",
+                            uid: "drs-selection-presetbg-picker",
+                            control: colorPicker("selection", "presetBackground", selection.presetBackground)
+                        },
+                        {
+                            displayName: "预设项悬浮背景色",
+                            uid: "drs-selection-preset-hoverbg-picker",
+                            control: colorPicker("selection", "presetHoverBackground", selection.presetHoverBackground)
                         },
                         {
                             displayName: "悬浮文字色",
@@ -587,19 +651,59 @@ export class DateRangeSlicer implements IVisual {
                             control: colorPicker("selection", "listHoverBackground", selection.listHoverBackground)
                         },
                         {
-                            displayName: "选中态文字色",
+                            displayName: "选中文字色",
                             uid: "drs-selection-listactive-fg-picker",
                             control: colorPicker("selection", "listActiveText", selection.listActiveText)
                         },
                         {
-                            displayName: "选中态背景色",
+                            displayName: "选中背景色",
                             uid: "drs-selection-listactive-bg-picker",
                             control: colorPicker("selection", "listActiveBackground", selection.listActiveBackground)
+                        },
+                        {
+                            displayName: "选中文字加粗",
+                            uid: "drs-selection-activebold-toggle",
+                            control: toggleSwitch("selection", "activeBold", selection.activeBold)
+                        },
+                        {
+                            displayName: "行高（值/预设/搜索框共享）",
+                            uid: "drs-selection-itemh-input",
+                            control: numUpDown("selection", "itemHeight", selection.itemHeight, 16, 48)
+                        },
+                        {
+                            displayName: "行字号",
+                            uid: "drs-selection-itemfs-input",
+                            control: numUpDown("selection", "itemFontSize", selection.itemFontSize, 8, 20)
+                        },
+                        {
+                            displayName: "行水平内边距",
+                            uid: "drs-selection-itempadx-input",
+                            control: numUpDown("selection", "itemPaddingX", selection.itemPaddingX, 0, 24)
                         },
                         {
                             displayName: "行间距",
                             uid: "drs-selection-listgap-input",
                             control: numUpDown("selection", "listGap", selection.listGap, 0, 12)
+                        },
+                        {
+                            displayName: "勾选框尺寸",
+                            uid: "drs-selection-checksize-input",
+                            control: numUpDown("selection", "checkSize", selection.checkSize, 10, 24)
+                        },
+                        {
+                            displayName: "勾选框圆角",
+                            uid: "drs-selection-checkradius-input",
+                            control: numUpDown("selection", "checkRadius", selection.checkRadius, 0, 6)
+                        },
+                        {
+                            displayName: "搜索框占位符色",
+                            uid: "drs-selection-placeholder-picker",
+                            control: colorPicker("selection", "placeholderColor", selection.placeholderColor)
+                        },
+                        {
+                            displayName: "空状态文字色",
+                            uid: "drs-selection-emptytext-picker",
+                            control: colorPicker("selection", "emptyTextColor", selection.emptyTextColor)
                         }
                     ]
                 },
@@ -617,6 +721,11 @@ export class DateRangeSlicer implements IVisual {
                             displayName: "滑块色",
                             uid: "drs-selection-scrollbar-thumb-picker",
                             control: colorPicker("selection", "scrollbarThumbColor", selection.scrollbarThumbColor)
+                        },
+                        {
+                            displayName: "宽度",
+                            uid: "drs-selection-scrollbar-w-input",
+                            control: numUpDown("selection", "scrollbarWidth", selection.scrollbarWidth, 4, 16)
                         }
                     ]
                 }
@@ -1403,6 +1512,27 @@ export class DateRangeSlicer implements IVisual {
         this.settings.selection.scrollbarTrackColor = color(s.scrollbarTrackColor, DEFAULTS.selection.scrollbarTrackColor);
         this.settings.selection.scrollbarThumbColor = color(s.scrollbarThumbColor, DEFAULTS.selection.scrollbarThumbColor);
         this.settings.selection.listGap = clamp(s.listGap, 0, 12, DEFAULTS.selection.listGap);
+        // —— 新增可配项：全局 UI 维度（颜色）——
+        this.settings.selection.presetBackground = color(s.presetBackground, DEFAULTS.selection.presetBackground);
+        this.settings.selection.presetHoverBackground = color(s.presetHoverBackground, DEFAULTS.selection.presetHoverBackground);
+        this.settings.selection.placeholderColor = color(s.placeholderColor, DEFAULTS.selection.placeholderColor);
+        this.settings.selection.emptyTextColor = color(s.emptyTextColor, DEFAULTS.selection.emptyTextColor);
+        // —— 新增可配项：全局 UI 维度（尺寸/数值）——
+        this.settings.selection.itemHeight = clamp(s.itemHeight, 16, 48, DEFAULTS.selection.itemHeight);
+        this.settings.selection.itemFontSize = clamp(s.itemFontSize, 8, 20, DEFAULTS.selection.itemFontSize);
+        this.settings.selection.itemPaddingX = clamp(s.itemPaddingX, 0, 24, DEFAULTS.selection.itemPaddingX);
+        this.settings.selection.triggerHeight = clamp(s.triggerHeight, 16, 60, DEFAULTS.selection.triggerHeight);
+        this.settings.selection.triggerPaddingX = clamp(s.triggerPaddingX, 0, 24, DEFAULTS.selection.triggerPaddingX);
+        this.settings.selection.panelPaddingY = clamp(s.panelPaddingY, 0, 40, DEFAULTS.selection.panelPaddingY);
+        this.settings.selection.panelPaddingX = clamp(s.panelPaddingX, 0, 40, DEFAULTS.selection.panelPaddingX);
+        this.settings.selection.panelOffset = clamp(s.panelOffset, 0, 20, DEFAULTS.selection.panelOffset);
+        this.settings.selection.checkSize = clamp(s.checkSize, 10, 24, DEFAULTS.selection.checkSize);
+        this.settings.selection.checkRadius = clamp(s.checkRadius, 0, 6, DEFAULTS.selection.checkRadius);
+        this.settings.selection.arrowSize = clamp(s.arrowSize, 6, 20, DEFAULTS.selection.arrowSize);
+        this.settings.selection.scrollbarWidth = clamp(s.scrollbarWidth, 4, 16, DEFAULTS.selection.scrollbarWidth);
+        this.settings.selection.headerGap = clamp(h.headerGap, 0, 20, DEFAULTS.selection.headerGap);
+        // —— 新增可配项：布尔 ——
+        this.settings.selection.activeBold = bool(s.activeBold, DEFAULTS.selection.activeBold);
 
         const db = objs.defaultBehavior || {};
         this.settings.defaultThisMonth = bool(db.defaultThisMonth, DEFAULTS.defaultThisMonth);
@@ -1488,5 +1618,24 @@ export class DateRangeSlicer implements IVisual {
         this.root.style.setProperty("--drs-scrollbar-track", s.scrollbarTrackColor);
         this.root.style.setProperty("--drs-scrollbar-thumb", s.scrollbarThumbColor);
         this.root.style.setProperty("--drs-list-gap", `${s.listGap}px`);
+        // —— 全局可配化：新增 CSS 变量（token 驱动，零硬编码）——
+        this.root.style.setProperty("--drs-item-h", `${s.itemHeight}px`);
+        this.root.style.setProperty("--drs-row-fs", `${s.itemFontSize}px`);
+        this.root.style.setProperty("--drs-row-pad-x", `${s.itemPaddingX}px`);
+        this.root.style.setProperty("--drs-preset-bg", s.presetBackground);
+        this.root.style.setProperty("--drs-preset-hover-bg", s.presetHoverBackground);
+        this.root.style.setProperty("--drs-trigger-h", `${s.triggerHeight}px`);
+        this.root.style.setProperty("--drs-trigger-pad-x", `${s.triggerPaddingX}px`);
+        this.root.style.setProperty("--drs-panel-pad-y", `${s.panelPaddingY}px`);
+        this.root.style.setProperty("--drs-panel-pad-x", `${s.panelPaddingX}px`);
+        this.root.style.setProperty("--drs-panel-offset", `${s.panelOffset}px`);
+        this.root.style.setProperty("--drs-check-size", `${s.checkSize}px`);
+        this.root.style.setProperty("--drs-check-radius", `${s.checkRadius}px`);
+        this.root.style.setProperty("--drs-arrow-size", `${s.arrowSize}px`);
+        this.root.style.setProperty("--drs-scrollbar-w", `${s.scrollbarWidth}px`);
+        this.root.style.setProperty("--drs-placeholder", s.placeholderColor);
+        this.root.style.setProperty("--drs-empty-fg", s.emptyTextColor);
+        this.root.style.setProperty("--drs-active-bold", s.activeBold ? "bold" : "normal");
+        this.root.style.setProperty("--drs-header-gap", `${s.headerGap}px`);
     }
 }

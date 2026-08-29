@@ -293,9 +293,133 @@
                     }
                 },
                 "listGap": {
-                    "displayName": "行间距（列表项之间的间距，0-12）",
+                    "displayName": "行间距（值项之间的间距，0-12）",
                     "type": {
                         "numeric": true
+                    }
+                },
+                "presetBackground": {
+                    "displayName": "预设项默认背景色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "presetHoverBackground": {
+                    "displayName": "预设项悬浮背景色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "placeholderColor": {
+                    "displayName": "搜索框占位符色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "emptyTextColor": {
+                    "displayName": "空状态文字色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "itemHeight": {
+                    "displayName": "行高（值/预设/搜索框共享，16-48）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "itemFontSize": {
+                    "displayName": "行字号（共享，8-20）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "itemPaddingX": {
+                    "displayName": "行水平内边距（共享，0-24）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "triggerHeight": {
+                    "displayName": "输入框高度（16-60）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "triggerPaddingX": {
+                    "displayName": "输入框水平内边距（0-24）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "panelPaddingY": {
+                    "displayName": "下拉面板上下内边距（0-40）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "panelPaddingX": {
+                    "displayName": "下拉面板左右内边距（0-40）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "panelOffset": {
+                    "displayName": "下拉面板与输入框间距（0-20）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "checkSize": {
+                    "displayName": "勾选框尺寸（10-24）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "checkRadius": {
+                    "displayName": "勾选框圆角（0-6）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "arrowSize": {
+                    "displayName": "下拉箭头大小（6-20）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "scrollbarWidth": {
+                    "displayName": "滚动条宽度（4-16）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "headerGap": {
+                    "displayName": "标头与输入框间距（0-20）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "activeBold": {
+                    "displayName": "选中态文字加粗",
+                    "type": {
+                        "bool": true
                     }
                 }
             }
