@@ -259,50 +259,86 @@
     flex-direction: column;
     /* 防御性：杜绝任何情况下的多列回流（单列是列表模式的唯一正确形态） */
     flex-wrap: nowrap;
-    /* 行间距由格式面板「行间距」配置驱动，默认 4px */
-    gap: var(--drs-list-gap, 4px);
+    /* 行间距由格式面板「行间距」配置驱动，默认 2px（与 DEFAULTS 一致） */
+    gap: var(--drs-list-gap, 2px);
     /* 列表区自己滚动，搜索框保持固定可见 */
     min-height: 0;
     /* 面板默认最大高度约 7 项：值 ≤ 7 项不出现滚动条，> 7 项才出细滚动条，
-       与原生切片器观感一致。列表项固定 28px，行间距参与累加 */
-    --drs-item-h: 28px;
-    max-height: calc(7 * var(--drs-item-h) + 6 * var(--drs-list-gap, 4px));
+       与原生切片器观感一致。列表项固定 24px，行间距参与累加 */
+    --drs-item-h: 24px;
+    max-height: calc(7 * var(--drs-item-h) + 6 * var(--drs-list-gap, 2px));
     overflow-y: auto;
     /* 顶部极小呼吸，避免搜索框与首行贴死 */
     padding-top: 2px;
 }
 .drs-list-item {
     flex: 0 0 auto;
-    height: 28px;
-    padding: 0 10px;
+    /* 原生下拉切片器紧凑行高（约 24px，比预设项矮一档） */
+    height: 24px;
+    /* 左侧给勾选框留出空间：checkmark(14) + 间距(6) = 20 */
+    padding: 0 8px 0 28px;
     color: var(--drs-list-fg, #FFFFFF);
-    font-size: 12px;
+    font-size: 11px;
     font-family: "Segoe UI", sans-serif;
     /* 左对齐加固：单列下文字左对齐，显式声明防止被覆盖 */
     text-align: left;
     justify-content: flex-start;
+    align-items: center;
     cursor: pointer;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     border-radius: var(--drs-radius);
     border: 1px solid transparent;
-    background: rgba(255, 255, 255, 0.03);
-    transition: color .12s ease, background-color .12s ease, border-color .12s ease, box-shadow .12s ease;
+    background: transparent;
+    position: relative;
+    transition: color .12s ease, background-color .12s ease;
+}
+/* 左侧勾选框：复现原生下拉切片器的 checkbox 观感（纯 CSS 绘制，不改动 DOM） */
+.drs-list-item::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    box-sizing: border-box;
+    border: 1px solid var(--drs-border);
+    border-radius: 2px;
+    background: var(--drs-bg, #142436);
+    transition: background-color .12s ease, border-color .12s ease;
+}
+/* 选中态：勾选框填强调色 + 对勾 */
+.drs-list-item.active::before {
+    background: var(--drs-accent);
+    border-color: var(--drs-accent);
+}
+.drs-list-item.active::after {
+    content: "";
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    width: 4px;
+    height: 8px;
+    box-sizing: border-box;
+    border: solid #FFFFFF;
+    border-width: 0 2px 2px 0;
+    transform: translateY(-60%) rotate(45deg);
 }
 .drs-list-item:hover {
     color: var(--drs-list-hover-fg, #B4B2A9);
     background: var(--drs-list-hover-bg, rgba(255, 255, 255, 0.05));
 }
-/* 选中态：与预设项一致的强调蓝描边 + 半透明底 */
+/* 选中态：文字用选中态文字色（不再整行描边，改为原生式的"勾选框 + 文字高亮"） */
 .drs-list-item.active {
-    background: var(--drs-list-active-bg, rgba(55, 138, 221, 0.18));
     color: var(--drs-list-active-fg, #378ADD);
     font-weight: 600;
-    border: 1px solid var(--drs-accent);
+    background: transparent;
 }
 .drs-list-item.active:hover {
-    background: var(--drs-list-active-bg, rgba(55, 138, 221, 0.18));
+    color: var(--drs-list-active-fg, #378ADD);
+    background: var(--drs-list-hover-bg, rgba(255, 255, 255, 0.05));
 }
 .drs-list-empty {
     flex: 0 0 auto;

@@ -1,5 +1,5 @@
 {
-		"version": "2.8.0.0",
+		"version": "2.8.0.1",
 		"author": {"name":"BI Delivery","email":"bi@example.com"},
 		"resources": [
 			{
@@ -8,7 +8,7 @@
 				"file": "resources/DateRangeSlicer20260825010.pbiviz.json"
 			}
 		],
-		"visual": {"name":"dateRangeSlicer","displayName":"日期区间切片器 v2.8-列表布局对齐原生","guid":"DateRangeSlicer20260825010","visualClassName":"DateRangeSlicer","version":"2.8.0.0","description":"（v2.8.0）列表模式布局对齐原生切片器：① 新增「行间距」配置项（默认 4px，范围 0-12），经 CSS 变量驱动列表项间距；② 搜索框与列表无缝贴合（去掉间距）；③ 列表项文字左对齐加固；④ 面板默认最大高度约 7 项，超出才出现细滚动条，避免滚动条一出现就过长；⑤ 防御性样式 flex-wrap:nowrap 杜绝多列回流；⑥ 因新增配置项必须换 GUID（009→010），导入后强制刷新内存旧实例（旧缓存实例是之前截图多列的根因）。颜色/选中态/滚动条样式保持 v2.7 成果。","supportUrl":"https://community.powerbi.com","gitHubUrl":"https://github.com/"},
+		"visual": {"name":"dateRangeSlicer","displayName":"日期区间切片器 v2.8-列表布局对齐原生","guid":"DateRangeSlicer20260825010","visualClassName":"DateRangeSlicer","version":"2.8.0.1","description":"（v2.8.0）列表模式布局对齐原生切片器：① 新增「行间距」配置项（默认 4px，范围 0-12），经 CSS 变量驱动列表项间距；② 搜索框与列表无缝贴合（去掉间距）；③ 列表项文字左对齐加固；④ 面板默认最大高度约 7 项，超出才出现细滚动条，避免滚动条一出现就过长；⑤ 防御性样式 flex-wrap:nowrap 杜绝多列回流；⑥ 因新增配置项必须换 GUID（009→010），导入后强制刷新内存旧实例（旧缓存实例是之前截图多列的根因）。颜色/选中态/滚动条样式保持 v2.7 成果。","supportUrl":"https://community.powerbi.com","gitHubUrl":"https://github.com/"},
 		"metadata": {
 			"pbivizjson": {
 				"resourceId": "rId0"

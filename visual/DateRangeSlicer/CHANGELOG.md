@@ -3,7 +3,9 @@
 * **新增「行间距」配置项**：格式面板「下拉样式 → 列表项」组新增「行间距」数值输入，默认 4px、范围 0-12。经 `capabilities.selection.listGap` → `DEFAULTS` → `readSettings`（`clamp(...,0,12,...)`）→ `applyStyles` 写入 CSS 变量 `--drs-list-gap` → LESS `.drs-list { gap: var(--drs-list-gap, 4px) }` 完整链路驱动。
 * **搜索框与列表无缝贴合**：`.drs-search` 的 `margin-bottom` 由 6px 改为 0（原生切片器搜索框与列表紧连无空隙），列表顶部仅留 2px 视觉呼吸（`padding-top: 2px`）。
 * **列表项文字左对齐加固**：`.drs-list-item` 显式 `justify-content: flex-start`（其为 flex 容器时），确保单列下不被居中覆盖。
-* **面板默认约 7 项才滚动**：`.drs-list` 新增 `--drs-item-h: 28px` 与 `max-height: calc(7 * var(--drs-item-h) + 6 * var(--drs-list-gap, 4px))`。值 ≤ 7 项时不出现滚动条，> 7 项才出现细滚动条，解决「滚动条一出现就过长」。滚动条样式沿用 v2.7 暗色细条（8px），未改。
+* **列表项改造为原生下拉切片器观感**：新增左侧 CSS 勾选框（`::before` 画方框、`.active` 时填强调色 + 白色对勾 `::after`），选中态由「整行边框+半透明底」改为「勾选框 + 文字高亮」（与预设项一致的强调蓝）。行高 28→24px、字号 12→11px、内边距左侧留 28px 给勾选框，整体更紧凑。配色仍走深蓝暗色可配方案（未改白底）。
+* **面板默认约 7 项才滚动**：`.drs-list` 新增 `--drs-item-h: 24px`（与紧凑行高同步）与 `max-height: calc(7 * var(--drs-item-h) + 6 * var(--drs-list-gap, 2px))`。值 ≤ 7 项时不出现滚动条，> 7 项才出现细滚动条，解决「滚动条一出现就过长」。滚动条样式沿用 v2.7 暗色细条（8px），未改。
+* **默认行间距收敛**：`listGap` 默认值 4→2px（更贴原生紧凑），范围仍 0-12 可配。
 * **防御性单列**：`.drs-list` 加 `flex-wrap: nowrap`，杜绝任何情况下的多列回流（代码层面本已是单列，多列是旧缓存实例的观感）。
 * **capabilities 变更 → 换 GUID**：`selection` 对象新增 `listGap` 属性。GUID `DateRangeSlicer20260825009` → `DateRangeSlicer20260825010`，displayName 改为「日期区间切片器 v2.8-列表布局对齐原生」。旧视觉实例需删除画布上的旧视觉后重新导入（capabilities 变更的硬性要求，也是之前截图多列的根因）。
 * 构建验证：解包产物确认新 GUID/2.8.0.0、`listGap` 属性、`--drs-list-gap` 变量写入、`.drs-list` 含 `max-height` 与 `flex-wrap:nowrap`、`.drs-search` 的 `margin-bottom` 已无 6px。

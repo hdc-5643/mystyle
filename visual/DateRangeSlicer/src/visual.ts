@@ -79,8 +79,8 @@ const DEFAULTS = {
         // 滚动条暗色配色（贴近原生切片器观感）
         scrollbarTrackColor: "#0A1428",
         scrollbarThumbColor: "#2C4A6B",
-        // 列表项行间距：默认 4px，范围 0-12（贴近原生切片器观感）
-        listGap: 4
+        // 列表项行间距：默认 2px，范围 0-12（贴近原生切片器紧凑观感）
+        listGap: 2
     },
     // 「默认本月」：首次加载（且无已保存筛选）时自动将区间套为最新日期所在月（月首日→最新日期，MTD），随数据刷新自动跟进
     defaultThisMonth: true,
