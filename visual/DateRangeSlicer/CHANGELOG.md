@@ -1,3 +1,10 @@
+## 2.8.0.2
+* **修复严重布局 bug：列表模式被渲染成多列**。根因是 `applyStyles()` 中 `this.listEl.style.display = isList ? "block" : "none"` 把 `.drs-list` 的内联 `display` 强行覆盖为 `block`，导致 CSS 中 `display:flex; flex-direction:column` 完全失效；`<button>` 列表项按默认 inline-block 流式排列，于是出现两列。修复为 `this.listEl.style.display = isList ? "" : "none"`——空字符串移除内联覆盖，恢复 CSS 的 flex 单列布局。
+
+## 2.8.0.1
+* **列表项改造为原生下拉切片器观感**：新增左侧 CSS 勾选框（`::before` 画方框、`.active` 时填强调色 + 白色对勾 `::after`），选中态由「整行边框+半透明底」改为「勾选框 + 文字高亮」（与预设项一致的强调蓝）。行高 28→24px、字号 12→11px、内边距左侧留 28px 给勾选框，整体更紧凑。配色仍走深蓝暗色可配方案（未改白底）。
+* **默认行间距收敛**：`listGap` 默认值 4→2px（更贴原生），范围仍 0-12 可配。
+
 ## 2.8.0.0
 * **列表模式布局对齐原生切片器（非颜色，颜色保持 v2.7 成果）**。
 * **新增「行间距」配置项**：格式面板「下拉样式 → 列表项」组新增「行间距」数值输入，默认 4px、范围 0-12。经 `capabilities.selection.listGap` → `DEFAULTS` → `readSettings`（`clamp(...,0,12,...)`）→ `applyStyles` 写入 CSS 变量 `--drs-list-gap` → LESS `.drs-list { gap: var(--drs-list-gap, 4px) }` 完整链路驱动。

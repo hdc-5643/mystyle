@@ -1452,7 +1452,10 @@ export class DateRangeSlicer implements IVisual {
             grid.style.display = isList ? "none" : "grid";
         }
         this.searchEl.style.display = (isList && this.settings.listBehavior.showSearch) ? "block" : "none";
-        this.listEl.style.display = isList ? "block" : "none";
+        // 列表容器必须恢复为 flex 容器（CSS 中 .drs-list 是 flex-direction:column），
+        // 用 display:"" 移除内联覆盖，让 CSS 定义的 display:flex 生效；
+        // 之前误写为 "block" 会导致 Flexbox 失效，按钮元素按 inline-block 流式排列成多列。
+        this.listEl.style.display = isList ? "" : "none";
         // 列表模式：搜索框固定、列表区内部滚动；预设模式：面板整体滚动
         this.panelEl.classList.toggle("drs-panel-list-mode", isList);
 
