@@ -287,16 +287,18 @@
     flex: 0 0 auto;
     box-sizing: border-box;
     width: 100%;
-    height: var(--drs-item-h, 24px);
+    height: var(--drs-search-h, 24px);
     /* 搜索框与下方列表紧密贴合（原生切片器无空隙），仅留 2px 视觉呼吸 */
     margin-bottom: 0;
     padding: 0 8px;
     color: var(--drs-list-fg, #FFFFFF);
     font-family: "Segoe UI", sans-serif;
-    font-size: var(--drs-row-fs, 11px);
-    background: var(--drs-bg, #193653);
-    border: var(--drs-border-width) solid var(--drs-border);
-    border-radius: var(--drs-radius);
+    font-size: var(--drs-search-fs, 11px);
+    /* 极简下划线风格：背景透明、无边框、仅底部 1px 下划线（颜色/显隐独立可配） */
+    background: var(--drs-search-bg, transparent);
+    border: none;
+    border-bottom: var(--drs-search-underline-on, 1px) solid var(--drs-search-underline, #2C4A6B);
+    border-radius: 0;
     outline: none;
     transition: border-color .15s ease, box-shadow .15s ease;
 }
@@ -305,8 +307,8 @@
     opacity: 1;
 }
 .drs-search:focus {
-    border-color: var(--drs-accent);
-    box-shadow: 0 0 0 1px var(--drs-accent) inset;
+    border-bottom-color: var(--drs-accent);
+    box-shadow: 0 1px 0 0 var(--drs-accent) inset;
 }
 
 .drs-list {
@@ -437,13 +439,16 @@
 .drs-panel.drs-panel-inline::-webkit-scrollbar-thumb:hover {
     background: var(--drs-accent);                       /* hover 时改用强调色，提供反馈 */
 }
-/* 隐藏滚动条两端的箭头按钮（原生 <> 方向标）：Webkit 专属，部分 Windows 主题下仍可能显示 */
+/* 滚动条两端的箭头按钮（原生 <> 方向标）：Webkit 专属，部分 Windows 主题下才显示。
+   显示/隐藏与颜色独立可配（--drs-scrollbar-arrow-on / --drs-scrollbar-arrow）。
+   注：Firefox 无独立箭头 API，箭头随滑块色，此配置仅 Webkit 生效。 */
 .drs-panel::-webkit-scrollbar-button,
 .drs-list::-webkit-scrollbar-button,
 .drs-panel.drs-panel-inline::-webkit-scrollbar-button {
-    display: none;
-    width: 0;
-    height: 0;
+    display: var(--drs-scrollbar-arrow-on, none);
+    width: var(--drs-scrollbar-w, 8px);
+    height: var(--drs-scrollbar-w, 8px);
+    background: var(--drs-scrollbar-arrow, #2C4A6B);
 }
 
 /* 列表模式下面板自身不滚动，改由 .drs-list 内部滚动，

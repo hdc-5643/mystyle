@@ -52,7 +52,7 @@ const DEFAULTS = {
         show: true,
         title: "结算日期",
         position: "left",
-        fontColor: "#B4B2A9",
+        fontColor: "#FFFFFF",
         background: "transparent",
         fontSize: 14,
         fontFamily: "Segoe UI",
@@ -68,18 +68,18 @@ const DEFAULTS = {
         triggerFontSize: 12,                // 输入框文字大小（px）
         triggerHeight: 30,                  // 输入框高度（px）
         triggerPaddingX: 8,                 // 输入框水平内边距（px）
-        arrowSize: 10,                      // 下拉箭头大小（px）
+        arrowSize: 20,                      // 下拉箭头大小（px）
         // —— 通用边框/圆角/强调 ——
         borderColor: "#2C4A6B",
         borderWidth: 1,
         borderRadius: 3,
         accentColor: "#378ADD",             // 强调色（选中勾选框/边框）
         // —— 下拉面板 ——
-        listBackground: "#0A1428",          // 下拉面板背景色
+        listBackground: "#193653",          // 下拉面板背景色
         listText: "#FFFFFF",                // 下拉面板文字色
         panelPaddingY: 10,                  // 面板上下内边距（px）
         panelPaddingX: 0,                   // 面板左右内边距（px）
-        panelOffset: 4,                     // 面板与输入框间距（px）
+        panelOffset: 0,                     // 面板与输入框间距（px）
         // —— 值 / 预设行（共享 token）——
         listHoverText: "#B4B2A9",           // 悬浮文字色
         listHoverBackground: "transparent", // 悬浮背景色
@@ -101,7 +101,17 @@ const DEFAULTS = {
         scrollbarThumbColor: "#2C4A6B",     // 滑块色
         scrollbarWidth: 8,                  // 滚动条宽度（px）
         // —— 标头 ——
-        headerGap: 4                        // 标头与输入框间距（px）
+        headerGap: 4,                       // 标头与输入框间距（px）
+        // —— 搜索框（独立可配，不再复用输入框/值）——
+        searchBackground: "transparent",    // 搜索框背景（下划线风格默认透明）
+        searchBorderColor: "#2C4A6B",       // 搜索框边框色（下划线风格默认不用，保留可配）
+        searchUnderlineColor: "#2C4A6B",    // 搜索框下划线颜色
+        searchShowUnderline: true,          // 搜索框显示下划线
+        searchHeight: 24,                   // 搜索框高度（px）
+        searchFontSize: 11,                 // 搜索框字号（px）
+        // —— 滚动条箭头（独立可配，与滑块分开）——
+        scrollbarArrowColor: "#2C4A6B",     // 滚动条箭头颜色（仅 Webkit 生效）
+        scrollbarShowArrow: false           // 滚动条显示箭头（默认隐藏，延续 v2.8.0.3）
     },
     // 「默认本月」：首次加载（且无已保存筛选）时自动将区间套为最新日期所在月（月首日→最新日期，MTD），随数据刷新自动跟进
     defaultThisMonth: true,
@@ -621,6 +631,43 @@ export class DateRangeSlicer implements IVisual {
                     ]
                 },
                 {
+                    displayName: "搜索框",
+                    uid: "drs-selection-search-group",
+                    collapsible: true,
+                    slices: [
+                        {
+                            displayName: "背景色",
+                            uid: "drs-selection-searchbg-picker",
+                            control: colorPicker("selection", "searchBackground", selection.searchBackground)
+                        },
+                        {
+                            displayName: "下划线颜色",
+                            uid: "drs-selection-search-underline-picker",
+                            control: colorPicker("selection", "searchUnderlineColor", selection.searchUnderlineColor)
+                        },
+                        {
+                            displayName: "显示下划线",
+                            uid: "drs-selection-search-underline-toggle",
+                            control: toggleSwitch("selection", "searchShowUnderline", selection.searchShowUnderline)
+                        },
+                        {
+                            displayName: "边框色（下划线风格默认不用）",
+                            uid: "drs-selection-search-border-picker",
+                            control: colorPicker("selection", "searchBorderColor", selection.searchBorderColor)
+                        },
+                        {
+                            displayName: "高度",
+                            uid: "drs-selection-search-h-input",
+                            control: numUpDown("selection", "searchHeight", selection.searchHeight, 16, 60)
+                        },
+                        {
+                            displayName: "字号",
+                            uid: "drs-selection-search-fs-input",
+                            control: numUpDown("selection", "searchFontSize", selection.searchFontSize, 8, 20)
+                        }
+                    ]
+                },
+                {
                     displayName: "值",
                     uid: "drs-selection-listitem-group",
                     collapsible: true,
@@ -726,6 +773,16 @@ export class DateRangeSlicer implements IVisual {
                             displayName: "宽度",
                             uid: "drs-selection-scrollbar-w-input",
                             control: numUpDown("selection", "scrollbarWidth", selection.scrollbarWidth, 4, 16)
+                        },
+                        {
+                            displayName: "箭头颜色（仅 Webkit 生效）",
+                            uid: "drs-selection-scrollbar-arrow-picker",
+                            control: colorPicker("selection", "scrollbarArrowColor", selection.scrollbarArrowColor)
+                        },
+                        {
+                            displayName: "显示箭头",
+                            uid: "drs-selection-scrollbar-arrow-toggle",
+                            control: toggleSwitch("selection", "scrollbarShowArrow", selection.scrollbarShowArrow)
                         }
                     ]
                 }
@@ -1531,8 +1588,18 @@ export class DateRangeSlicer implements IVisual {
         this.settings.selection.arrowSize = clamp(s.arrowSize, 6, 20, DEFAULTS.selection.arrowSize);
         this.settings.selection.scrollbarWidth = clamp(s.scrollbarWidth, 4, 16, DEFAULTS.selection.scrollbarWidth);
         this.settings.selection.headerGap = clamp(h.headerGap, 0, 20, DEFAULTS.selection.headerGap);
+        // —— 搜索框独立可配项 ——
+        this.settings.selection.searchBackground = color(s.searchBackground, DEFAULTS.selection.searchBackground);
+        this.settings.selection.searchBorderColor = color(s.searchBorderColor, DEFAULTS.selection.searchBorderColor);
+        this.settings.selection.searchUnderlineColor = color(s.searchUnderlineColor, DEFAULTS.selection.searchUnderlineColor);
+        this.settings.selection.searchHeight = clamp(s.searchHeight, 16, 60, DEFAULTS.selection.searchHeight);
+        this.settings.selection.searchFontSize = clamp(s.searchFontSize, 8, 20, DEFAULTS.selection.searchFontSize);
+        // —— 滚动条箭头独立可配项 ——
+        this.settings.selection.scrollbarArrowColor = color(s.scrollbarArrowColor, DEFAULTS.selection.scrollbarArrowColor);
         // —— 新增可配项：布尔 ——
         this.settings.selection.activeBold = bool(s.activeBold, DEFAULTS.selection.activeBold);
+        this.settings.selection.searchShowUnderline = bool(s.searchShowUnderline, DEFAULTS.selection.searchShowUnderline);
+        this.settings.selection.scrollbarShowArrow = bool(s.scrollbarShowArrow, DEFAULTS.selection.scrollbarShowArrow);
 
         const db = objs.defaultBehavior || {};
         this.settings.defaultThisMonth = bool(db.defaultThisMonth, DEFAULTS.defaultThisMonth);
@@ -1637,5 +1704,15 @@ export class DateRangeSlicer implements IVisual {
         this.root.style.setProperty("--drs-empty-fg", s.emptyTextColor);
         this.root.style.setProperty("--drs-active-bold", s.activeBold ? "bold" : "normal");
         this.root.style.setProperty("--drs-header-gap", `${s.headerGap}px`);
+        // —— 搜索框独立 token ——
+        this.root.style.setProperty("--drs-search-bg", s.searchBackground);
+        this.root.style.setProperty("--drs-search-border", s.searchBorderColor);
+        this.root.style.setProperty("--drs-search-underline", s.searchUnderlineColor);
+        this.root.style.setProperty("--drs-search-underline-on", s.searchShowUnderline ? "1px" : "0");
+        this.root.style.setProperty("--drs-search-h", `${s.searchHeight}px`);
+        this.root.style.setProperty("--drs-search-fs", `${s.searchFontSize}px`);
+        // —— 滚动条箭头 token ——
+        this.root.style.setProperty("--drs-scrollbar-arrow", s.scrollbarArrowColor);
+        this.root.style.setProperty("--drs-scrollbar-arrow-on", s.scrollbarShowArrow ? "auto" : "none");
     }
 }

@@ -1,3 +1,9 @@
+## 2.10.0.0
+* **搜索框独立配置 + 极简下划线风格**：搜索框不再复用输入框背景/边框与值的行高/字号，改为独立可配。新增 6 个属性：搜索框背景色 `searchBackground`（默认 transparent）、下划线颜色 `searchUnderlineColor`（默认 #2C4A6B）、显示下划线 `searchShowUnderline`（默认 true）、边框色 `searchBorderColor`（默认 #2C4A6B，下划线风格默认不用）、高度 `searchHeight`（默认 24）、字号 `searchFontSize`（默认 11）。样式改为"背景透明 + 无边框 + 底部 1px 下划线 + 圆角归零"，聚焦时下划线变强调色。搜索框本就在列表滚动区之外、面板内固定（吸顶），无需改 JS。格式面板新增「搜索框」组（置于「值」组前）。
+* **滚动条箭头独立可配**：新增箭头颜色 `scrollbarArrowColor`（默认 #2C4A6B，与滑块色分开）和显示开关 `scrollbarShowArrow`（默认 false，延续 v2.8.0.3 隐藏行为）。LESS 滚动条按钮由写死 `display:none` 改为 `display:var(--drs-scrollbar-arrow-on)` + `background:var(--drs-scrollbar-arrow)`。注：箭头色仅 Webkit 生效，Firefox 无独立箭头 API。
+* **4 处默认值调整（用户指定）**：输入框下拉箭头大小 `10`→`20`；标头字体色 `#B4B2A9`→`#FFFFFF`；下拉面板背景 `#0A1428`→`#193653`；面板与输入框间距 `4`→`0`。
+* **capabilities 变更 → 换 GUID**：`selection` 对象新增 8 属性（搜索框 6 + 滚动条箭头 2）。GUID `DateRangeSlicer20260825011` → `DateRangeSlicer20260825012`，displayName 改为「日期区间切片器 v2.10-搜索框独立配置」。旧视觉实例需删除画布上的旧视觉后重新导入。
+
 ## 2.9.0.0
 * **全局 UI 可配置化（核心大改）**：把预设区间与值列表两套模式的所有 UI 维度全部暴露为格式面板配置项，消除一切"有默认值就硬编码不让改"的死角。共新增 18 个可配属性（4 颜色 + 13 尺寸 + 1 布尔），连同既有属性共 34 项贯通 `capabilities → DEFAULTS → readSettings → applyStyles → LESS var()` 完整链路。新增项：预设项默认/悬浮背景、搜索框占位符色、空状态文字色、行高、行字号、行水平内边距、输入框高度/水平内边距、下拉面板上下/左右内边距、面板与输入框间距、勾选框尺寸/圆角、下拉箭头大小、滚动条宽度、标头间距、选中加粗。
 * **设计 token 化**：LESS 根变量区建立统一 `--drs-*` token（行高/字号/内边距/间距/勾选框/面板偏移/箭头/滚动条/标头间距等），所有选择器引用变量，删除散落字面量。

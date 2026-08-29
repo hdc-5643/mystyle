@@ -421,6 +421,70 @@
                     "type": {
                         "bool": true
                     }
+                },
+                "searchBackground": {
+                    "displayName": "搜索框背景色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "searchBorderColor": {
+                    "displayName": "搜索框边框色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "searchUnderlineColor": {
+                    "displayName": "搜索框下划线颜色",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "searchShowUnderline": {
+                    "displayName": "搜索框显示下划线",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "searchHeight": {
+                    "displayName": "搜索框高度（16-60）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "searchFontSize": {
+                    "displayName": "搜索框字号（8-20）",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "scrollbarArrowColor": {
+                    "displayName": "滚动条箭头颜色（仅 Webkit）",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "scrollbarShowArrow": {
+                    "displayName": "滚动条显示箭头",
+                    "type": {
+                        "bool": true
+                    }
                 }
             }
         },

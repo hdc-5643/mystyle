@@ -1,11 +1,11 @@
 {
   "visual": {
     "name": "dateRangeSlicer",
-    "displayName": "日期区间切片器 v2.9-全局UI可配置",
-    "guid": "DateRangeSlicer20260825011",
+    "displayName": "日期区间切片器 v2.10-搜索框独立配置",
+    "guid": "DateRangeSlicer20260825012",
     "visualClassName": "DateRangeSlicer",
-    "version": "2.9.0.0",
-    "description": "（v2.9.0.0）全局 UI 可配置化：预设/值双模式所有维度（颜色、行高、字号、内边距、间距、勾选框尺寸/圆角、箭头大小、滚动条宽度、占位符/空状态色、面板偏移、标头间距等共 34 项）全部暴露为格式面板配置项，零硬编码；预设选中态统一为 checkbox 风格（勾选框+文字高亮，去掉整行蓝框/蓝底）；格式面板分组为 切片器模式/标头/输入框/下拉面板/值/滚动条；输入框默认背景 #193653、文字 #FFFFFF。",
+    "version": "2.10.0.0",
+    "description": "（v2.10.0.0）搜索框独立配置：新增 6 项（背景色/下划线颜色/显示下划线/边框色/高度/字号），样式改为极简下划线风格（背景透明+无边框+底部下划线，吸顶固定）。滚动条箭头独立可配：新增箭头颜色与显示开关，与滑块色分开。4 处默认值调整：输入框下拉箭头大小 10→20、标头字体色 #B4B2A9→#FFFFFF、下拉面板背景 #0A1428→#193653、面板与输入框间距 4→0。",
     "supportUrl": "https://community.powerbi.com",
     "gitHubUrl": "https://github.com/"
   },
