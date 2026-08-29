@@ -1,1 +1,5 @@
+# 主题校验（validate_theme.py）
 jsonschema==4.26.0
+
+# 知识库 PDF 提取（visual/powerbi-visual-kb/scripts/extract_pdf.py）
+pypdf==6.16.2

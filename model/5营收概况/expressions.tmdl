@@ -1,7 +1,0 @@
-expression ServerName = "caesar.rwlb.rds.aliyuncs.com." meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
-	lineageTag: 3ab02dd9-4d38-42f6-80f1-2bc0a3cc9c12
-
-	annotation PBI_NavigationStepName = 导航
-
-	annotation PBI_ResultType = Text
-

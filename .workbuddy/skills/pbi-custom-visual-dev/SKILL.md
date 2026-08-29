@@ -7,6 +7,11 @@ agent_created: true
 
 # Power BI 自定义视觉(pbiviz)开发实战
 
+> **官方知识库**：`visual/powerbi-visual-kb/`（PDF 全文 + API 速查）
+> - 开发时先读 `visual/powerbi-visual-kb/00-INDEX.md` 定位官方文档与 API 签名
+> - **接口签名以本地 `node_modules/powerbi-visuals-api` 的 typings 为准**（PDF 含已废弃成员）
+> - **Python 脚本一律用 `.venv/Scripts/python.exe`**，禁止系统解释器
+
 源自 DateRangeSlicer（日期区间切片器，深色主题对齐 HTML 顶栏）的多轮迭代。下面的坑都是真踩过的，按"现象→根因→解法"给。
 
 ## 一、工具链与构建（本项目固定路径）
@@ -160,9 +165,30 @@ input.value 为空时，浏览器日历无定位日期，会跳到 `max` 属性�
 
 ### ⚠️ 关键 TS 坑：BasicFilterOperators 是 const enum
 - `powerbi-models` 的 `BasicFilterOperators` 是 **const enum**（编译期内联，运行时无对象），`BasicFilterOperators.Is` 当值用会报 `only refers to a type, but is being used as a value`。
-- 但 `BasicFilter` 构造的 operator 参数类型又是这个枚举类型，直接传字符串字面量 `"Is"` 会报 `not assignable to parameter of type 'BasicFilterOperators'`。
-- **正确写法（类型断言）**：`new BasicFilter(target, "Is" as BasicFilterOperators, value)`、`"In" as BasicFilterOperators`。运行时仍是字符串 `"Is"`/`"In"`，类型也满足。
+- 但 `BasicFilter` 构造的 operator 参数类型又是这个枚举类型，直接传字符串字面量 `"Is"` 会报 `not assignable to parameter of type 'BasicFilterOperators'`（v2.6.0 实测踩到）。
+- **正确写法（类型断言）**：`const OP_IS = "Is" as BasicFilterOperators;` / `const OP_IN = "In" as BasicFilterOperators;`。运行时仍是字符串 `"Is"`/`"In"`，类型也满足。
 - 对比 `AdvancedFilter` 的 `"And"` 参数类型宽松，字符串字面量直接传即可（不用断言）。
+
+### ⚠️ 同字段多模式时：update() 必须按模式完全分流（v2.6.0 高危坑）
+- **场景**：一个视觉同时支持「介于筛选（AdvancedFilter，有 `conditions`）」与「值列表筛选（BasicFilter，无 `conditions`，只有 `operator`/`values`）」。
+- **坑**：`update()` 里常见的兼容写法是「收到非介于型筛选 → `remove` 并回到默认态」。在单模式时是对的，但**列表模式自己下发的就是 BasicFilter**，会命中这条分支 → **用户每选一次筛选就被自己紧接着的 update 立刻清掉，表现为「选了没反应」**，且无任何报错。
+- **解法**：在 `update()` 入口按模式 `return` 独立分支，绝不让 BasicFilter 流入介于模式的清除逻辑。
+- **判断筛选类型**：`filter.conditions` 存在 → AdvancedFilter；否则 `filter.operator === "Is"/"In"` → BasicFilter。
+
+### ⚠️ 新增交互元素必须同步加白名单（v2.6.0 踩到）
+本视觉的机制是「视觉内除白名单外一切区域点击即收起面板」（v2.4.3 确立）。
+**每新增一个可交互元素（搜索框、列表容器等），必须同步加入 `isInteractiveTarget()` 白名单**，
+否则用户一点它就被判定为「点空白」而收起面板 —— 搜索框尤其致命：一点面板就关，功能形同虚设。
+当前白名单：触发器 + 预设按钮 + 搜索框 + 列表容器。
+
+### 列表项：display 与 raw 必须分离
+- 界面显示用格式化文本（如 `YYYY/M/D`），但**筛选下发必须是 Power BI 的原始值**（保留 `raw`）。
+- 若误把格式化后的显示字符串当筛选值 → **匹配不到任何数据**，且无报错。
+- 切页恢复时同样要把筛选值统一转成 display 后再比对，兼容 `Date` 对象 / ISO 字符串 / 时间戳等多种形态。
+
+### capabilities 的 dataRoles.name 不可改
+`dataRoles[].name` 是**字段绑定的内部标识**。要支持更多字段类型时只能改 `displayName`，
+**改 `name` 会导致已有报表的字段绑定失效**（v2.6.0 支持文本字段时据此保留了 `name: "Date"`）。
 
 ### 弹出层挂 document.body（避免被视觉容器 overflow:hidden 裁剪）
 - `popup.style.position = "fixed"` + `getBoundingClientRect()` 取触发器视口坐标定位（fixed 相对视口，坐标一致）。

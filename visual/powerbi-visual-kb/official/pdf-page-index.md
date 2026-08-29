@@ -1,0 +1,182 @@
+# PDF 页码索引（主题 → 页码）
+
+> 用法：先在这里找到页码，再到 `pdf-full.md` 中搜索 `## Page N` 查看原文。
+> 生成脚本：`scripts/extract_pdf.py`（PDF 更新后重跑即可刷新）
+
+## 主题索引
+
+- **筛选 API / 筛选下发**：p146, p314, p316, p317, p481, p482, p518, p519, p520, p521, p522, p523 …（共 15 页，其余为 p524–p530）
+- **筛选：Identity / Hierarchy filter**：p467, p525, p526, p528, p529, p537
+- **格式面板 Formatting Model**：p34, p50, p51, p52, p53, p80, p144, p188, p189, p240, p243, p244 …（共 36 页，其余为 p245–p611）
+- **格式化组件 slices**：⚠️ 命中 46 页（关键词过泛，请改用全文检索）（p32–p589）
+- **对话框 dialog box**：p207, p208, p209, p210, p211, p212, p481
+- **浮层 / 弹出层**：p206, p214, p438, p441, p454
+- **resize / viewport**：p19, p21, p49, p76, p413, p414, p415, p416, p482, p523, p595, p627
+- **焦点模式 Focus mode**：p198, p199, p411, p412, p468, p482
+- **书签 bookmarks**：p145, p470
+- **上下文菜单 context menu**：p37, p60, p176, p177, p178, p220, p230, p319, p320, p328, p329, p330 …（共 27 页，其余为 p331–p677）
+- **钻取 drill**：p148, p177, p178, p323, p324, p333, p466, p467, p543, p544, p545, p546
+- **选择 selection**：p46, p149, p177, p178, p220, p221, p226, p227, p228, p229, p314, p315 …（共 28 页，其余为 p329–p678）
+- **高亮 highlight**：p68, p106, p145, p313, p348, p349, p352, p353, p360, p361, p362, p371 …（共 18 页，其余为 p408–p672）
+- **数据视图 DataView**：⚠️ 命中 63 页（关键词过泛，请改用全文检索）（p23–p672）
+- **capabilities 配置**：⚠️ 命中 106 页（关键词过泛，请改用全文检索）（p22–p586）
+- **工具提示 tooltips**：p60, p99, p101, p146, p148, p218, p231, p232, p233, p234, p235, p236 …（共 24 页，其余为 p237–p691）
+- **本地化 localization**：p47, p52, p141, p142, p261, p383, p384, p389, p390, p391, p455, p470 …（共 20 页，其余为 p481–p679）
+- **单元测试**：p394, p397, p399, p406, p407, p409, p686
+- **同步切片器**：p373, p374
+- **键盘导航**：p367, p466
+- **高对比度**：p369, p370, p634
+- **性能优化**：p191, p192, p195, p417, p426, p430
+- **发布 / 认证**：⚠️ 命中 42 页（关键词过泛，请改用全文检索）（p3–p697）
+- **许可 license**：p464
+- **R / Python 视觉**：p84, p85, p88, p95, p96, p97, p104, p107, p138, p471
+- **React**：p61, p62, p66, p67, p68, p69, p70, p71, p72, p73, p74, p75 …（共 17 页，其余为 p76–p208）
+- **移动端**：p198, p425, p486, p494
+- **本地存储 API**：p465, p481, p483, p484, p673, p680
+- **认证 authentication**：p8, p133, p466, p470, p481, p482, p486, p487, p488, p489, p490, p492, p495
+- **启动 URL / 文件下载**：p146, p466, p470, p476, p477, p481, p482, p550, p552, p553
+- **事件 API**：p481, p540, p541, p673
+- **条件格式**：p241, p343, p344, p346, p347, p412, p597
+- **排序**：p183, p184, p467, p481
+- **获取大数据 fetchMoreData**：p147, p306, p307, p308, p309, p310, p468, p470, p482
+- **无数据绑定渲染**：（PDF 中未命中关键词）
+- **显示警告图标**：p215, p216, p481
+- **小计 subtotal**：p149, p176, p375, p376, p377, p378, p467, p468
+- **动态格式字符串**：p155, p321
+- **On-object formatting**：p511
+- **子选择 Subselection**：p496, p497, p498, p503, p511, p512, p513, p514, p591, p592, p596
+
+## 按 PDF 目录（Outline）定位
+
+以下为 PDF 自带书签对应的章节，页码由 PDF 内部目标解析（解析失败则略过）。
+
+- Power BI developer visuals documentation（p1）
+  - Overview（p?）
+    - What are Power BI custom visuals?（p3）
+    - Develop a BI custom visual（p9）
+  - Tutorials（p?）
+    - Tutorial: Develop a Power BI circle card visual（p10）
+    - Tutorial: Add formatting options（p28）
+    - Tutorial: Build a bar chart visual（p37）
+    - Tutorial: Use React to create a Power BI visual（p61）
+    - Tutorial: Create an R-powered visual（p84）
+    - Build a funnel plot from R script to R visual（p96）
+  - About Power BI custom visuals（p?）
+    - Import a Power BI visual（p110）
+    - Visuals FAQ（p117）
+    - Examples of Power BI visuals（p123）
+    - The About dialog（p130）
+  - Develop your own custom visual（p?）
+    - Set up your environment for developing a Power BI visual（p134）
+    - Power BI visuals project structure（p139）
+    - Power BI visuals system integration（p143）
+    - Define capabilities（p148）
+    - Data view mappings（p156）
+    - Sort data（p182）
+    - Objects and properties（p185）
+    - Performance tips（p192）
+    - Create mobile friendly visuals（p198）
+    - Debug visuals（p201）
+    - Troubleshoot environment setup（p204）
+  - Add features to your custom visual（p?）
+    - Create a dialog box（p206）
+    - Add a display warning icon to your visual（p214）
+    - Visual interactions（p218）
+    - Add selections（p220）
+    - Visuals tooltips（p231）
+    - Analytics pane（p239）
+    - Add format pane（p?）
+      - Format pane（p243）
+      - Format pane example（p254）
+      - Formatting components（p?）
+        - Formatting card（p263）
+        - Formatting group（p266）
+        - Formatting container（p270）
+      - Formatting slices（p?）
+        - Toggle switch（p274）
+        - Num up down（p277）
+        - Slider（p280）
+        - Color picker（p283）
+        - Dropdowns（p285）
+        - Flag selections（p288）
+        - Text input（p291）
+        - Text area（p293）
+        - Font picker（p295）
+        - Alignment group（p297）
+        - Font control（p300）
+        - Margin padding（p303）
+    - Fetch more data（p306）
+    - Add bookmarks support（p313）
+    - Add context menu support（p319）
+    - Add dynamic format strings support（p321）
+    - Add drill-down support（p323）
+    - Add colors to your visual（p340）
+    - Add conditional formatting（p343）
+    - Highlight data in visuals（p348）
+    - Enable selection across multiple visuals（p364）
+    - Enable keyboard navigation（p367）
+    - Add high-contrast mode support（p369）
+    - Enable sync slicers（p373）
+    - Display subtotal data（p375）
+    - Render a visual without requiring data binding（p380）
+    - Add localization（p383）
+    - Add unit tests for visual project（p394）
+    - Advanced edit mode（p411）
+    - Custom visual resize optimization（p413）
+  - Publish your Power BI custom visual（p?）
+    - Package a Power BI visual（p418）
+    - Test your Power BI custom visual（p421）
+    - Publish your Power BI custom visuals to AppSource（p427）
+    - Get a Power BI custom visual certified（p431）
+    - Guidelines for publishing Power BI visuals（p437）
+    - Visuals for an organization in Power BI（p443）
+  - Licenses（p?）
+    - Licensing models for AppSource visuals（p445）
+    - License enforcement API（p448）
+    - Transactability and licensing FAQ（p456）
+  - Reference（p?）
+    - Changelog（p465）
+    - Landing page（p473）
+    - Launch URL（p476）
+    - Visual API（p480）
+    - Local storage API（p484）
+    - Authentication（p?）
+      - Authentication API（p486）
+      - Microsoft Entra ID application setup（p490）
+    - On object formatting API（p496）
+    - Subselection API（p512）
+    - Filter visuals API（p517）
+    - Identity filter API（p525）
+    - Hierarchy identity filter API（p528）
+    - Detect filter API（p538）
+    - 'Rendering' events API（p539）
+    - Drilldown API（p543）
+    - Dynamic drill support API（p544）
+    - File download API（p550）
+    - Permissions API（p555）
+    - Power BI Visual utilities（p?）
+      - Adding external libraries（p557）
+      - Interactivity utils（p559）
+      - Formatting utils（p566）
+      - Formatting model utils（p581）
+      - On object utils（p591）
+      - Data view utils（p597）
+      - Chart utils（p613）
+      - Color utils（p630）
+      - SVG utils（p640）
+      - Type utils（p657）
+      - Test utils（p669）
+      - Tooltip utils（p687）
+  - Resources（p?）
+    - Dev Center（p?）
+    - Custom Visuals Git Repo（p?）
+    - Creating SSL certificate（p693）
+    - Contribute to Fabric docs（p?）
+    - Microsoft Q & A（p?）
+    - Provide feedback（p?）
+      - Fabric ideas（p?）
+      - Azure feedback（p?）
+    - Community（p?）
+    - Service updates（p?）
+    - Azure Status（p?）
+    - Microsoft Learn training（p?）
